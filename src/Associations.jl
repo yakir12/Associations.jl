@@ -322,7 +322,7 @@ function openit(f::String)
     end
 end
 
-function main()
+function main(folder::String)
     files = filedates(folder)
 
     # ok cancel
