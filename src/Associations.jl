@@ -322,7 +322,7 @@ function openit(f::String)
     end
 end
 
-function main(folder::String)
+function main(;folder = open_dialog("Pick the folder with all the videos"))
     files = filedates(folder)
 
     # ok cancel
