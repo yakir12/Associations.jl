@@ -205,11 +205,11 @@ function filedates(folder::String)
     return filter((_,v) -> v.keep, files)
 end
 
-const tags = strip.(vec(readcsv(joinpath("..","resources","tags.csv"), String)))
-const specieses = strip.(vec(readcsv(joinpath("..","resources","species.csv"), String)))
-const experiments = strip.(vec(readcsv(joinpath("..","resources","experiments.csv"), String)))
-const fieldstations = strip.(vec(readcsv(joinpath("..","resources","fieldstations.csv"), String)))
-const plots = strip.(vec(readcsv(joinpath("..","resources","plots.csv"), String)))
+const tags = strip.(vec(readcsv(joinpath(Pkg.dir("Associations"),"resources","tags.csv"), String)))
+const specieses = strip.(vec(readcsv(joinpath(Pkg.dir("Associations"),"resources","species.csv"), String)))
+const experiments = strip.(vec(readcsv(joinpath(Pkg.dir("Associations"),"resources","experiments.csv"), String)))
+const fieldstations = strip.(vec(readcsv(joinpath(Pkg.dir("Associations"),"resources","fieldstations.csv"), String)))
+const plots = strip.(vec(readcsv(joinpath(Pkg.dir("Associations"),"resources","plots.csv"), String)))
 
 immutable Tag
     tag::String
