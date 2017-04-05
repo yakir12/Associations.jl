@@ -23,7 +23,14 @@ type File
 end
 
 function datetimeduration(fname::String)::Tuple{DateTime, Int}
-    duration, dateTimeOriginal, createDate, modifyDate = strip.(split(readstring(`exiftool -T -duration -AllDates -n $fname`), '\t'))
+    try 
+        duration, dateTimeOriginal, createDate, modifyDate = strip.(split(readstring(`exiftool -T -duration -AllDates -n $fname`), '\t'))
+    catch
+        createDate = Dates.unix2datetime(ctime(fname))
+        modifyDate = Dates.unix2datetime(mtime(fname))
+        dateTimeOriginal = "-"
+        duration = "-"
+    end
     duration = duration == "-" ? 10000000 : ceil(Int, parse(duration))
     datetime = DateTime(now())
     for i in [dateTimeOriginal, createDate, modifyDate]
@@ -419,7 +426,7 @@ function main(folder::String)
         destroy(win0)
     end
     #stopfileupdate = map(fstart) do f
-        #push!(fstop.signal, f)
+    #push!(fstop.signal, f)
     #end
 
     openvideo = map(fstart; init=nothing) do f
