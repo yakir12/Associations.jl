@@ -23,13 +23,15 @@ type File
 end
 
 function datetimeduration(fname::String)::Tuple{DateTime, Int}
+    duration = "-" 
+    dateTimeOriginal = "-" 
+    createDate = "-" 
+    modifyDate = "-"
     try 
         duration, dateTimeOriginal, createDate, modifyDate = strip.(split(readstring(`exiftool -T -duration -AllDates -n $fname`), '\t'))
     catch
         createDate = Dates.unix2datetime(ctime(fname))
         modifyDate = Dates.unix2datetime(mtime(fname))
-        dateTimeOriginal = "-"
-        duration = "-"
     end
     duration = duration == "-" ? 10000000 : ceil(Int, parse(duration))
     datetime = DateTime(now())
@@ -49,7 +51,7 @@ function uploadsaved(folder::String)::Vector{File}
         for i = 1:size(f1,1)
             r = strip.(f1[i,:])
             dt = DateTime(r[3])
-            push!(f5, File(true, r[1:2]..., Dates.Year(dt), Dates.Month(dt), Dates.Day(dt), Dates.Hour(dt), Dates.Minute(dt), Dates.Second(dt), parse(Int, r[4]), r[5:end]...))
+            push!(f5, File(true, r[1:2]..., Dates.Year(dt).value, Dates.Month(dt).value, Dates.Day(dt).value, Dates.Hour(dt).value, Dates.Minute(dt).value, Dates.Second(dt).value, parse(Int, r[4]), r[5:end]...))
         end
     end
     return f5
@@ -67,7 +69,7 @@ function getfiles(folder::String)::Vector{File}
             fname = relpath(fname, folder)
             any(f.fname == fname for f in f5) && continue
             dt, du = datetimeduration(f)
-            push!(f5, File(true, fname, ext, Dates.Year(dt), Dates.Month(dt), Dates.Day(dt), Dates.Hour(dt), Dates.Minute(dt), Dates.Second(dt), du, ""))
+            push!(f5, File(true, fname, ext, Dates.Year(dt).value, Dates.Month(dt).value, Dates.Day(dt).value, Dates.Hour(dt).value, Dates.Minute(dt).value, Dates.Second(dt).value, du, ""))
         end
     end
     return f5
@@ -253,6 +255,7 @@ function addtagfun(A, ts, rs, as, t)
         state = (x,y) in as
         cb = checkbox(state)
         cbh = map(cb.signal) do tf
+            #println(tf)
             key = (x, y)
             tf ? push!(as, key) : delete!(as, key)
         end
@@ -285,6 +288,7 @@ function addrunfun(A, ts, rs, as, r)
         state = (x,y) in as
         cb = checkbox(state)
         cbh = map(cb.signal) do tf
+            #println(tf)
             key = (x, y)
             tf ? push!(as, key) : delete!(as, key)
         end
@@ -467,7 +471,7 @@ function main(;folder = clipboard())
     end
     doneh = signal_connect(done.widget, :clicked) do _
         open(joinpath(folder, "files.csv"), "w") do o
-            println(o, "# file, date and time, video duration (sec), md5sum, comments")
+            println(o, "# file, date and time, video duration (sec), comments")
             for f in values(files)
                 f.keep || continue
                 println(o, f.fname, ", ", f.ext, ", ", DateTime(f.year, f.month, f.day, f.hour, f.minute, f.second), ", ", f.duration, ", ", f.comment)
