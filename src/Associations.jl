@@ -329,7 +329,7 @@ function openit(f::String)
     end
 end
 
-function main(folder::String)
+function main(;folder = clipboard())
     files = filedates(folder)
 
     # ok cancel
