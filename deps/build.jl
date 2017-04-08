@@ -19,4 +19,4 @@ provides(Binaries, URI("https://mediaarea.net/download/binary/mediainfo/0.7.94/M
 
 provides(BuildProcess, Autotools(libtarget = "mediainfo"), mediainfo)
 
-@BinDeps.install #Dict(:mediainfo => :mediainfo)
+@BinDeps.install Dict(:mediainfo => :mediainfo)
