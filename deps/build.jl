@@ -19,7 +19,7 @@ end
 
 # Windows
 if is_windows()
-    provides(Sources,
+    provides(Binaries,
          URI("http://www.sno.phy.queensu.ca/~phil/exiftool/exiftool-10.48.zip"),
          exiftool, os = :Windows)
 end
