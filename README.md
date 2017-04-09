@@ -37,18 +37,19 @@ The program will process all the video files within a given folder. While the or
 
 ```
 videos
-│   somefile
-│   somevideofile
+│   some_file
+│   some_video_file
 │   ...
 │
 └───metadata
 │       poi.csv
 │       run.csv
 │   
-└───somefolder
-    │   somevideofile
-    │   othervideofile
+└───some_folder
+    │   some_video_file
+    │   other_video_file
     │   ...
+    │   
     ...
 ```
 
@@ -73,7 +74,7 @@ Each row describes a metadatum. The first field (fields are separated by a comma
 You can have as many or as few metadata as you like, keeping only the metadata and POIs that are relevant to your specific setups. This flexibility allows the user to keep different `poi.csv` and `run.csv` metadata files in each of their video-folders.
 
 ### Instructions
-After launching the program, in the initial window, under `session`, choose to `open a folder`. Navigate and choose the folder that contains all the videos that you want to log (choose the folder itself, not a file inside the folder). Two additional windows will appear: a window for logging POIs, and a window for logging Runs. In the POI window the user can choose a specific POI to log, a video file and time stamp where the POI starts, a video file and time stamp where the POI ends, and a comment (choosing a video file starts running it automatically, pressing ``Add` adds the specific POI to the registry). In the Run window the user can edit a run by setting the correct metadata and pressinng `Add`. After adding some POIs and Runs, the first wiindow (with the `session` menubar) will be populated with rows of runs and columns of POIs. Use the checkboxes to indicate the associations between the Runs and POIs. 
+After launching the program, in the initial window, under `session`, choose to `open a folder`. Navigate and choose the folder that contains all the videos that you want to log (choose the folder itself, not a file inside the folder). Two additional windows will appear: a window for logging POIs, and a window for logging Runs. In the POI window the user can choose a specific POI to log, a video file and time stamp where the POI starts, a video file and time stamp where the POI ends, and a comment (choosing a video file starts running it automatically, pressing `Add` adds the specific POI to the registry). In the Run window the user can edit a run by setting the correct metadata and pressinng `Add`. After adding some POIs and Runs, the first wiindow (with the `session` menubar) will be populated with rows of runs and columns of POIs. Use the checkboxes to indicate the associations between the Runs and POIs. 
 
 When done, choose `Save & check videos` from the menubar. While the program attempts to automatically extract the orignial filming date and time the video file was taped, it is *imperrative* that you make sure these are indeed correct. You will be prestened with another window containng all the videos you logged and their dates and times. Adjust these accordingly (pressing the video filename starts playing the video). When finished press `Done`.
 
