@@ -24,4 +24,4 @@ if is_windows()
          exiftool, os = :Windows)
 end
 
-@BinDeps.install Dict(:exiftool => :exiftool)
+#@BinDeps.install Dict(:exiftool => :exiftool)
