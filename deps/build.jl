@@ -2,25 +2,26 @@ using BinDeps
 
 @BinDeps.setup
 
-mediainfo = library_dependency("mediainfo", aliases = ["mediainfo.exe"])
+exiftool = library_dependency("exiftool", aliases = ["exiftool.exe"])
 
 # package managers
-provides(AptGet, "mediainfo", mediainfo)
-provides(Yum, "mediainfo", mediainfo)
-provides(Pacman, "mediainfo", mediainfo)
+if is_unix()
+    provides(Sources, 
+             URI("http://www.sno.phy.queensu.ca/~phil/exiftool/Image-ExifTool-10.48.tar.gz"), 
+             exiftool, os=:Mac)
+end
 
 if is_apple()
-    provides(Binaries, 
-             URI("https://mediaarea.net/download/binary/mediainfo/0.7.94/MediaInfo_CLI_0.7.94_Mac.dmg"), 
-             mediainfo, os=:Mac)
+    provides(Sources, 
+             URI("http://www.sno.phy.queensu.ca/~phil/exiftool/ExifTool-10.48.dmg"), 
+             exiftool, os=:Mac)
 end
 
 # Windows
 if is_windows()
     provides(Sources,
-         #URI("https://mediaarea.net/download/binary/mediainfo/0.7.94/MediaInfo_CLI_0.7.94_Windows_x64.zip"),
-         URI("https://mediaarea.net/download/binary/libmediainfo0/0.7.94/MediaInfo_DLL_0.7.94_Windows_x64_WithoutInstaller.7z"),
-         mediainfo, os = :Windows)
+         URI("http://www.sno.phy.queensu.ca/~phil/exiftool/exiftool-10.48.zip"),
+         exiftool, os = :Windows)
 end
 
-@BinDeps.install Dict(:mediainfo => :mediainfo)
+@BinDeps.install Dict(:exiftool => :exiftool)
