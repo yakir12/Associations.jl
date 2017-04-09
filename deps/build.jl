@@ -17,8 +17,9 @@ end
 
 # Windows
 if is_windows()
-    provides(Sources,#Binaries,
-         URI("https://mediaarea.net/download/binary/mediainfo/0.7.94/MediaInfo_CLI_0.7.94_Windows_x64.zip"),
+    provides(Binaries,#Sources
+         #URI("https://mediaarea.net/download/binary/mediainfo/0.7.94/MediaInfo_CLI_0.7.94_Windows_x64.zip"),
+         URI("https://mediaarea.net/download/binary/libmediainfo0/0.7.94/MediaInfo_DLL_0.7.94_Windows_x64_WithoutInstaller.7z"),
          mediainfo, os = :Windows)
 end
 
