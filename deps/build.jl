@@ -8,7 +8,7 @@ exiftool = library_dependency("exiftool", aliases = ["exiftool.exe"])
 if is_unix()
     provides(Sources, 
              URI("http://www.sno.phy.queensu.ca/~phil/exiftool/Image-ExifTool-10.48.tar.gz"), 
-             exiftool, os=:Mac)
+             exiftool, os=:Unix)
 end
 
 if is_apple()
@@ -24,4 +24,10 @@ if is_windows()
          exiftool, os = :Windows)
 end
 
-@BinDeps.GetSources Dict(:exiftool => :exiftool)
+GetSources(exiftool)
+
+@BinDeps.load_dependencies
+
+         URI("http://www.sno.phy.queensu.ca/~phil/exiftool/exiftool-10.48.zip"),
+
+         FileDownloader(URI("http://www.sno.phy.queensu.ca/~phil/exiftool/exiftool-10.48.zip"))

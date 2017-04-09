@@ -1,4 +1,4 @@
-#__precompile__()
+__precompile__()
 module Associations
 
 # assuming right now that all durations and times are positive
@@ -12,29 +12,35 @@ const exts = [".webm", ".mkv", ".flv", ".flv", ".vob", ".ogv", ".ogg", ".drc", "
 immutable VideoFile
     file::String
     datetime::Vector{DateTime}
+    duration::Dates.Second
 end
 
-==(a::VideoFile, b::VideoFile) = a.file == b.file && a.datetime == b.datetime
+==(a::VideoFile, b::VideoFile) = a.file == b.file && a.datetime == b.datetime && a.duration == b.duration
 
 function VideoFile(folder::String, file::String)
     fullfile = joinpath(folder, file)
-    dateTimeOriginal, createDate, modifyDate = strip.(split(readstring(`exiftool -T -AllDates -n $fullfile`), '\t'))
+    @assert isfile(fullfile)
+    duration_, dateTimeOriginal, createDate, modifyDate = strip.(split(readstring(`exiftool -T -duration -AllDates -n $fullfile`), '\t'))
     #duration_, dateTimeOriginal, createDate, modifyDate  = ("-", "-", "-", "-")
+    duration = Dates.Second(duration_ == "-" ? typemax(Int) : ceil(Int, parse(duration_)))
     datetime = DateTime(now())
     for i in [dateTimeOriginal, createDate, modifyDate]
         m = matchall(r"^(\d\d\d\d:\d\d:\d\d \d\d:\d\d:\d\d)", i)
         isempty(m) && continue
         datetime = min(datetime, DateTime(m[1], "yyyy:mm:dd HH:MM:SS"))
     end
-    VideoFile(file, [datetime])
+    VideoFile(file, [datetime], duration)
 end
 
 
 immutable Point
-    file::String
+    file::VideoFile
     time::Dates.Second
+    function Point(f, t)
+        @assert t <= f.duration
+        new(f, t)
+    end
 end
-Point(f::String, h::Int, m::Int, s::Int) = Point(f, sum(Dates.Second.([Dates.Hour(h), Dates.Minute(m), Dates.Second(s)])))
 
 ==(a::Point, b::Point) = a.file == b.file && a.time == b.time
 
@@ -43,11 +49,18 @@ immutable POI
     start::Point
     stop::Point
     comment::String
+    function POI(n, start, stop, c)
+        if start.file == stop.file
+            @assert start.time <= stop.time
+        end
+        new(n, start, stop, c)
+    end
 end
 
 
 function POI()
-    p = Point("", Dates.Second(0))
+    f = VideoFile("", [DateTime()], Dates.Second(0))
+    p = Point(f, Dates.Second(0))
     return POI("", p, p, "")
 end
 
@@ -80,10 +93,10 @@ end
 
 function save(folder::String, x::Vector{VideoFile})
     n = length(x)
-    a = Matrix{Any}(n + 1,2)
-    a[1,:] .= ["file", "date and time"]
+    a = Matrix{Any}(n + 1,3)
+    a[1,:] .= ["file", "date and time", "video duration (sec)"]
     for (i, v) in enumerate(x)
-        a[i + 1, :] .= [v.file, v.datetime[1]]
+        a[i + 1, :] .= [v.file, v.datetime[1], v.duration.value]
     end
     writecsv(joinpath(folder, "files.csv"), a)
 end
@@ -93,7 +106,7 @@ function save(folder::String, x::Vector{POI})
     a = Matrix{Any}(n + 1,6)
     a[1,:] .= ["name", "start file", "start time (seconds)", "stop file", "stop time (seconds)", "comments"]
     for (i, t) in enumerate(x)
-        a[i + 1, :] .= [t.name, t.start.file, t.start.time.value, t.stop.file, t.stop.time.value, t.comment]
+        a[i + 1, :] .= [t.name, t.start.file.file, t.start.time.value, t.stop.file.file, t.stop.time.value, t.comment]
     end
     writecsv(joinpath(folder, "pois.csv"), a)
 end
@@ -142,10 +155,15 @@ function empty!(a::Association)
     a.nruns = 0
 end
 
-function save(folder::String, a::Association, vfs::Vector{VideoFile})
+function save(folder::String, a::Association)
     folder = joinpath(folder, "log")
     isdir(folder) || mkdir(folder)
     if a.npois > 0
+        b = Set{VideoFile}()
+        for t in a.pois, vf in [t.start.file, t.stop.file]
+            push!(b, vf)
+        end
+        vfs = collect(keys(b.dict))
         save(folder, vfs)
         save(folder, a.pois)
     end
@@ -170,8 +188,9 @@ function loadVideoFiles(folder::String)::Vector{VideoFile}
         a, _ = readcsv(filescsv, String, header = true)
         a .= strip.(a)
         nrow, ncol = size(a)
+        @assert ncol == 3
         for i = 1:nrow
-            push!(vfs, VideoFile(a[i, 1], [DateTime(a[i, 2])]))
+            push!(vfs, VideoFile(a[i, 1], [DateTime(a[i, 2])], Dates.Second(parse(Int, a[i, 3]))))
         end
     end
     return vfs
@@ -179,27 +198,32 @@ end
 
 function getVideoFiles(folder::String)
     #old = uploadsavedVideoFiles(folder)
-    new = String[]
+    new = VideoFile[]
     for (root, dir, files) in walkdir(folder)
         for file in files
             file[1] == '.' && continue
             last(splitext(file)) in exts || continue
             fname = relpath(joinpath(root, file), folder)
-            push!(new, fname)
+            #any(f.file == fname for f in old) && continue
+            push!(new, VideoFile(folder, fname))
         end
     end
     return new
+    #return (old, new)
 end
 
-function loadPOIs(folder::String)::Vector{POI}
+function loadPOIs(folder::String, vfs = loadVideoFiles(folder))::Vector{POI}
     filescsv = joinpath(folder, "pois.csv")
     tgs = POI[]
     if isfile(filescsv) 
         a, _ = readcsv(filescsv, String, header = true)
         a .= strip.(a)
         nrow, ncol = size(a)
+        @assert ncol == 6
         for i = 1:nrow
-            push!(tgs, POI(a[i, 1], Point(a[i, 2], Dates.Second(parse(Int, a[i, 3]))), Point(a[i, 4], Dates.Second(parse(Int, a[i, 5]))), a[i, 6]))
+            fstart = vfs[findfirst(x -> x.file == a[i, 2], vfs)]
+            fstop = vfs[findfirst(x -> x.file == a[i, 4], vfs)]
+            push!(tgs, POI(a[i, 1], Point(fstart, Dates.Second(parse(Int, a[i, 3]))), Point(fstop, Dates.Second(parse(Int, a[i, 5]))), a[i, 6]))
         end
     end
     return tgs
@@ -243,6 +267,6 @@ function loadAssociation(folder::String)::Association
 end
 
 
-#include(joinpath(Pkg.dir("Associations"), "src", "utility.jl"))
+include(joinpath(Pkg.dir("Associations"), "src", "utility.jl"))
 
 end # module

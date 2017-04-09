@@ -5,12 +5,12 @@ function shorten(s::String, k::Int)::String
     m > 2k || return s
     s[1:k]*"…"*s[end-k + 1:end]
 end
-function shorten(vfs::Vector{String})
-    for k = 20:max(20, maximum(length.(vfs)))
-        shortnames = Dict{String, String}()
+function shorten(vfs::Vector{VideoFile})
+    for k = 20:max(20, maximum(length(vf.file) for vf in vfs))
+        shortnames = Dict{String, VideoFile}()
         tooshort = false
         for vf in vfs
-            key = shorten(vf, k)
+            key = shorten(vf.file, k)
             if haskey(shortnames, k)
                 tooshort = true
                 break
@@ -34,11 +34,11 @@ end
 function checkvideos(folder, as, win)
     win = Window("LogBeetle")
 
-    a = Set{String}()
+    a = Set{VideoFile}()
     for t in as.pois, vf in [t.start.file, t.stop.file]
         push!(a, vf)
     end
-    ft = [VideoFile(folder, k) for k in keys(a.dict)]
+    ft = keys(a.dict)
 
     done = button("Done")
     g = Grid()
@@ -95,15 +95,15 @@ function checkvideos(folder, as, win)
     push!(win, g)
     showall(win)
     h = map(done, init = nothing) do _
-        save(folder, as, ft)
+        save(folder, as)
         destroy(win)
         nothing
     end
 end
 
 win = Window("LogBeetle")
-folder = "/home/yakir/datasturgeon/projects/marie/projectmanagement/main/testvideos"
-#folder = open_dialog("Select Dataset Folder", win, action=Gtk.GtkFileChooserAction.SELECT_FOLDER)
+#folder = "/home/yakir/datasturgeon/projects/marie/projectmanagement/main/testvideos"
+folder = open_dialog("Select Dataset Folder", win, action=Gtk.GtkFileChooserAction.SELECT_FOLDER)
 
 # POI
 
@@ -150,23 +150,26 @@ poig[5,1:2] = comment.widget
 poig[6,0:2] = widget(poiadd)
 # function 
 tasksstart, resultsstart = async_map(nothing, signal(fstart)) do f²
-    openit(joinpath(folder, files[f²]))
+    openit(joinpath(folder, files[f²].file))
     return nothing
 end
 tasksstop, resultsstop = async_map(nothing, signal(fstop)) do f²
-    openit(joinpath(folder, files[f²]))
+    openit(joinpath(folder, files[f²].file))
     return nothing
 end
-fstar = map(x -> files[x], fstart)
-fsto = map(x -> files[x], fstop)
-startPoint = map(Point, fstar, signal(h1), signal(m1), signal(s1))
-stopPoint = map(Point, fsto, signal(h2), signal(m2), signal(s2))
-tt = map(POI, signal(poi), startPoint, stopPoint, signal(comment))
-t = map(_ -> value(tt), poiadd, init = value(tt))
-goodtime = map(startPoint, stopPoint) do start, stop
-    start.file == stop.file ? start.time <= stop.time : true
+tt = map(signal(poi), signal(fstart), signal(h1), signal(m1), signal(s1), signal(fstop), signal(h2), signal(m2), signal(s2), signal(comment)) do name², fstart², h1², m1², s1², fstop², h2², m2², s2², comment²
+    try 
+        start = Point(files[fstart²], sum(Dates.Second.([Dates.Hour(h1²), Dates.Minute(m1²), Dates.Second(s1²)])))
+        stop = Point(files[fstop²], sum(Dates.Second.([Dates.Hour(h2²), Dates.Minute(m2²), Dates.Second(s2²)])))
+        goodpoi = POI(name², start, stop, comment²)
+        setproperty!(widget(poiadd), :sensitive, true)
+        goodpoi
+    catch
+        setproperty!(widget(poiadd), :sensitive, false)
+        POI()
+    end
 end
-poisignal = filterwhen(goodtime, POI(), t)
+poisignal = map(_ -> value(tt), poiadd, init = value(tt))
 
 
 # run
