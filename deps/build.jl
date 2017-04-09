@@ -9,14 +9,17 @@ provides(AptGet, "mediainfo", mediainfo)
 provides(Yum, "mediainfo", mediainfo)
 provides(Pacman, "mediainfo", mediainfo)
 
-provides(Binaries, URI("https://mediaarea.net/download/binary/mediainfo/0.7.94/MediaInfo_CLI_0.7.94_Mac.dmg"), mediainfo, os=:Mac)
-#if is_apple() 
-#end
+if is_apple()
+    provides(Binaries, 
+             URI("https://mediaarea.net/download/binary/mediainfo/0.7.94/MediaInfo_CLI_0.7.94_Mac.dmg"), 
+             mediainfo, os=:Mac)
+end
 
-provides(Binaries, URI("https://mediaarea.net/download/binary/mediainfo/0.7.94/MediaInfo_CLI_0.7.94_Windows_x64.zip"), mediainfo, os=:Windows)
-#if is_windows() 
-#end
-
-provides(BuildProcess, Autotools(libtarget = "mediainfo"), mediainfo)
+# Windows
+if is_windows()
+    provides(Binaries,
+         URI("https://mediaarea.net/download/binary/mediainfo/0.7.94/MediaInfo_CLI_0.7.94_Windows_x64.zip"),
+         mediainfo, os = :Windows)
+end
 
 @BinDeps.install Dict(:mediainfo => :mediainfo)
