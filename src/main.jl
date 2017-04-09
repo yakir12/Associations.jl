@@ -1,3 +1,2 @@
-#!/user/bin/julia
-using Associations
-main()
+include(joinpath(Pkg.dir("Associations"), "src", "guifunctions.jl"))
+#main()

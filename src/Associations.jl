@@ -5,7 +5,7 @@ module Associations
 
 import Base: push!, ==, empty!
 
-export VideoFile, Point, Tag, Run, Association, getVideoFiles, push!, save, shorten, openit, ==, empty!, loadAssociation
+export VideoFile, Point, POI, Run, Association, getVideoFiles, push!, save, shorten, openit, ==, empty!, loadAssociation
 
 const exts = [".webm", ".mkv", ".flv", ".flv", ".vob", ".ogv", ".ogg", ".drc", ".mng", ".avi", ".mov", ".qt", ".wmv", ".yuv", ".rm", ".rmvb", ".asf", ".amv", ".mp4", ".m4p", ".m4v", ".mpg", ".mp2", ".mpeg", ".mpe", ".mpv", ".mpg", ".mpeg", ".m2v", ".m4v", ".svi", ".3gp", ".3g2", ".mxf", ".roq", ".nsv", ".flv", ".f4v", ".f4p", ".f4a", ".f4b", ".MTS", ".DS_Store"]
 
@@ -44,12 +44,12 @@ end
 
 ==(a::Point, b::Point) = a.file == b.file && a.time == b.time
 
-immutable Tag
+immutable POI
     name::String
     start::Point
     stop::Point
     comment::String
-    function Tag(n, start, stop, c)
+    function POI(n, start, stop, c)
         if start.file == stop.file
             @assert start.time <= stop.time
         end
@@ -58,13 +58,13 @@ immutable Tag
 end
 
 
-function Tag()
+function POI()
     f = VideoFile("", [DateTime()], Dates.Second(0))
     p = Point(f, Dates.Second(0))
-    return Tag("", p, p, "")
+    return POI("", p, p, "")
 end
 
-==(a::Tag, b::Tag) = a.name == b.name && a.comment == b.comment && a.start == b.start && a.stop == b.stop
+==(a::POI, b::POI) = a.name == b.name && a.comment == b.comment && a.start == b.start && a.stop == b.stop
 
 
 immutable Run
@@ -101,14 +101,14 @@ function save(folder::String, x::Vector{VideoFile})
     writecsv(joinpath(folder, "files.csv"), a)
 end
 
-function save(folder::String, x::Vector{Tag}) 
+function save(folder::String, x::Vector{POI}) 
     n = length(x)
     a = Matrix{Any}(n + 1,6)
     a[1,:] .= ["name", "start file", "start time (seconds)", "stop file", "stop time (seconds)", "comments"]
     for (i, t) in enumerate(x)
         a[i + 1, :] .= [t.name, t.start.file.file, t.start.time.value, t.stop.file.file, t.stop.time.value, t.comment]
     end
-    writecsv(joinpath(folder, "tags.csv"), a)
+    writecsv(joinpath(folder, "pois.csv"), a)
 end
 
 function save(folder::String, x::Vector{Run})
@@ -128,19 +128,19 @@ function save(folder::String, x::Vector{Run})
 end
 
 type Association
-    tags::Vector{Tag}
-    ntags::Int
+    pois::Vector{POI}
+    npois::Int
     runs::Vector{Run}
     nruns::Int
     associations::Set{Tuple{Int, Int}}
     Association(t, r, a) = new(t, length(t), r, length(r), a)
 end
 
-Association() = Association(Tag[], Run[], Set())
+Association() = Association(POI[], Run[], Set())
 
-function push!(a::Association, t::Tag)
-    a.ntags += 1
-    push!(a.tags, t)
+function push!(a::Association, t::POI)
+    a.npois += 1
+    push!(a.pois, t)
 end
 
 function push!(a::Association, metadata::Dict{Symbol, String})
@@ -149,28 +149,30 @@ function push!(a::Association, metadata::Dict{Symbol, String})
 end
 
 function empty!(a::Association)
-    empty!(a.tags)
+    empty!(a.pois)
     empty!(a.runs)
-    a.ntags = 0
+    a.npois = 0
     a.nruns = 0
 end
 
 function save(folder::String, a::Association)
-    if a.ntags > 0
+    folder = joinpath(folder, "log")
+    isdir(folder) || mkdir(folder)
+    if a.npois > 0
         b = Set{VideoFile}()
-        for t in a.tags, vf in [t.start.file, t.stop.file]
+        for t in a.pois, vf in [t.start.file, t.stop.file]
             push!(b, vf)
         end
         vfs = collect(keys(b.dict))
         save(folder, vfs)
-        save(folder, a.tags)
+        save(folder, a.pois)
     end
     if a.nruns > 0
         save(folder, a.runs)
     end
     if !isempty(a.associations)
         open(joinpath(folder, "associations.csv"), "w") do o
-            println(o, "tag number, run number")
+            println(o, "POI number, run number")
             for (t, r) in a.associations
                 println(o, t, ",", r)
             end
@@ -210,9 +212,9 @@ function getVideoFiles(folder::String)
     #return (old, new)
 end
 
-function loadTags(folder::String, vfs = loadVideoFiles(folder))::Vector{Tag}
-    filescsv = joinpath(folder, "tags.csv")
-    tgs = Tag[]
+function loadPOIs(folder::String, vfs = loadVideoFiles(folder))::Vector{POI}
+    filescsv = joinpath(folder, "pois.csv")
+    tgs = POI[]
     if isfile(filescsv) 
         a, _ = readcsv(filescsv, String, header = true)
         a .= strip.(a)
@@ -221,7 +223,7 @@ function loadTags(folder::String, vfs = loadVideoFiles(folder))::Vector{Tag}
         for i = 1:nrow
             fstart = vfs[findfirst(x -> x.file == a[i, 2], vfs)]
             fstop = vfs[findfirst(x -> x.file == a[i, 4], vfs)]
-            push!(tgs, Tag(a[i, 1], Point(fstart, Dates.Second(parse(Int, a[i, 3]))), Point(fstop, Dates.Second(parse(Int, a[i, 5]))), a[i, 6]))
+            push!(tgs, POI(a[i, 1], Point(fstart, Dates.Second(parse(Int, a[i, 3]))), Point(fstop, Dates.Second(parse(Int, a[i, 5]))), a[i, 6]))
         end
     end
     return tgs
@@ -248,7 +250,8 @@ function loadRuns(folder::String)::Vector{Run}
 end
 
 function loadAssociation(folder::String)::Association
-    ts = loadTags(folder)
+    folder = joinpath(folder, "log")
+    ts = loadPOIs(folder)
     rs = loadRuns(folder)
     filescsv = joinpath(folder, "associations.csv")
     as = Set{Tuple{Int, Int}}()
