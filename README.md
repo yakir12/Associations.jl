@@ -7,10 +7,12 @@ Associations.jl helps scientists log video files and the experiments associated 
 1. Install [Julia](https://julialang.org/downloads/) -> you should be able to launch it (some icon on the Desktop or some such)
 2. start Julia -> a Julia-terminal popped up
 3. Copy: `Pkg.clone("git://github.com/yakir12/Associations.jl.git")` and paste it in the newly opened Julia-terminal, press Enter
-4. You can close the Julia-terminal now
-5. Download the `LogBeetle` file, put it somewhere nice (the Desktop?)
+4. You can close the Julia-terminal after it's done running
+> 5. Download the `LogBeetle` file, put it somewhere nice (the Desktop?)
 
-That's it. Now whenever you double click on the `LogBeetle` file the program will start.
+> That's it. Now whenever you double click on the `LogBeetle` file the program will start.
+
+To start the program, open a Julia-terminal, 
 
 ## How to use
 

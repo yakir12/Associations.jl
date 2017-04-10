@@ -1,6 +1,4 @@
-using Gtk.ShortNames, GtkReactive, Associations
-include(joinpath(Pkg.dir("Associations"), "src", "guifunctions.jl"))
-
-folder = poirun()
-
+using Associations
+folder = ARGS[1]
+poirun(folder)
 checkvideos(folder)
