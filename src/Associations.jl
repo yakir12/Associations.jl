@@ -8,6 +8,11 @@ import Base: push!, ==, empty!
 #export VideoFile, Point, POI, Run, Association, getVideoFiles, push!, save, shorten, openit, ==, empty!, loadAssociation, loadVideoFiles
 export poirun, checkvideos
 
+path = joinpath(Pkg.dir("Associations"), "deps/src")
+folders = readdir(path)
+filter!(r"exiftool"i, folders)
+exiftool = joinpath(Pkg.dir("Associations"), "deps/src", folders[1], "exiftool")
+
 const exts = [".webm", ".mkv", ".flv", ".flv", ".vob", ".ogv", ".ogg", ".drc", ".mng", ".avi", ".mov", ".qt", ".wmv", ".yuv", ".rm", ".rmvb", ".asf", ".amv", ".mp4", ".m4p", ".m4v", ".mpg", ".mp2", ".mpeg", ".mpe", ".mpv", ".mpg", ".mpeg", ".m2v", ".m4v", ".svi", ".3gp", ".3g2", ".mxf", ".roq", ".nsv", ".flv", ".f4v", ".f4p", ".f4a", ".f4b", ".MTS", ".DS_Store"]
 
 immutable VideoFile
@@ -19,7 +24,7 @@ end
 
 function VideoFile(folder::String, file::String)
     fullfile = joinpath(folder, file)
-    dateTimeOriginal, createDate, modifyDate = strip.(split(readstring(`exiftool -T -AllDates -n $fullfile`), '\t'))
+    dateTimeOriginal, createDate, modifyDate = strip.(split(readstring(`$exiftool -T -AllDates -n $fullfile`), '\t'))
     #duration_, dateTimeOriginal, createDate, modifyDate  = ("-", "-", "-", "-")
     datetime = DateTime(now())
     for i in [dateTimeOriginal, createDate, modifyDate]
