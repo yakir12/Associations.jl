@@ -1,5 +1,3 @@
-using Gtk.ShortNames, GtkReactive, Associations
-
 function shorten(s::String, k::Int)::String
     m = length(s)
     m > 2k || return s
@@ -31,14 +29,28 @@ function openit(f::String)
         error("Couldn't open $f")
     end
 end
-function checkvideos(folder, as, win)
-    win = Window("LogBeetle")
+function checkvideos(folder)
+    as = loadAssociation(folder)
 
     a = Set{String}()
     for t in as.pois, vf in [t.start.file, t.stop.file]
         push!(a, vf)
     end
-    ft = [VideoFile(folder, k) for k in keys(a.dict)]
+
+    old = loadVideoFiles(folder)
+
+    ft = VideoFile[]
+    for k in keys(a.dict)
+        found = false
+        for f in old
+            if k == f.file
+                push!(ft, f)
+                found = true
+                break
+            end
+        end
+        found || push!(ft, VideoFile(folder, k))
+    end
 
     done = button("Done")
     g = Grid()
@@ -91,171 +103,14 @@ function checkvideos(folder, as, win)
         end
     end
     g[0:6, length(ft) + 1] = widget(done)
-    #win = Window(g, "LogBeetle: Check videos", 1, 1)
-    push!(win, g)
+    win = Window(g, "LogBeetle: Check videos", 1, 1)
     showall(win)
     h = map(done, init = nothing) do _
-        save(folder, as, ft)
+        save(folder, ft)
         destroy(win)
         nothing
     end
-end
 
-win = Window("LogBeetle")
-folder = "/home/yakir/datasturgeon/projects/marie/projectmanagement/main/testvideos"
-#folder = open_dialog("Select Dataset Folder", win, action=Gtk.GtkFileChooserAction.SELECT_FOLDER)
-
-# POI
-
-files = shorten(getVideoFiles(folder))
-points = strip.(vec(readcsv(joinpath(folder, "metadata", "poi.csv"), String)))
-# widgets
-shortfiles = collect(keys(files))
-poi = dropdown(points)
-fstart = dropdown(shortfiles)
-fstop = dropdown(shortfiles)
-s1 = spinbutton(0:59, orientation = "v")
-m1 = spinbutton(0:59, orientation = "v")
-h1 = spinbutton(0:23, orientation = "v")
-s2 = spinbutton(0:59, orientation = "v")
-m2 = spinbutton(0:59, orientation = "v")
-h2 = spinbutton(0:23, orientation = "v")
-comment = textarea("")
-poiadd = button("Add")
-# layout
-setproperty!(s1.widget, :width_request, 5)
-setproperty!(m1.widget, :width_request, 5)
-setproperty!(h1.widget, :width_request, 5)
-setproperty!(s2.widget, :width_request, 5)
-setproperty!(m2.widget, :width_request, 5)
-setproperty!(h2.widget, :width_request, 5)
-poig = Grid()
-poig[0,0] = Label("POI")
-poig[0,1] = Label("Start")
-poig[2,0] = Label("H")
-poig[3,0] = Label("M")
-poig[4,0] = Label("S")
-poig[0,2] = Label("Stop")
-poig[5,0] = Label("Comment")
-poig[1,0] = poi.widget
-poig[1,1] = fstart.widget
-poig[2,1] = h1.widget
-poig[3,1] = m1.widget
-poig[4,1] = s1.widget
-poig[1,2] = fstop.widget
-poig[2,2] = h2.widget
-poig[3,2] = m2.widget
-poig[4,2] = s2.widget
-poig[5,1:2] = comment.widget
-poig[6,0:2] = widget(poiadd)
-# function 
-tasksstart, resultsstart = async_map(nothing, signal(fstart)) do f²
-    openit(joinpath(folder, files[f²]))
-    return nothing
-end
-tasksstop, resultsstop = async_map(nothing, signal(fstop)) do f²
-    openit(joinpath(folder, files[f²]))
-    return nothing
-end
-fstar = map(x -> files[x], fstart)
-fsto = map(x -> files[x], fstop)
-startPoint = map(Point, fstar, signal(h1), signal(m1), signal(s1))
-stopPoint = map(Point, fsto, signal(h2), signal(m2), signal(s2))
-tt = map(POI, signal(poi), startPoint, stopPoint, signal(comment))
-t = map(_ -> value(tt), poiadd, init = value(tt))
-goodtime = map(startPoint, stopPoint) do start, stop
-    start.file == stop.file ? start.time <= stop.time : true
-end
-poisignal = filterwhen(goodtime, POI(), t)
-
-
-# run
-
-# data
-a = readcsv(joinpath(folder, "metadata", "run.csv"))
-metadata = Dict{String, Vector{String}}()
-for i = 1:size(a,1)
-    b = strip.(a[i,:])
-    metadata[b[1]] = filter(x -> !isempty(x), b[2:end])
-end
-nmd = length(metadata)
-# widgets
-widgets = Dict{Symbol, Union{GtkReactive.Textarea, GtkReactive.Dropdown}}()
-for (k, v) in metadata
-    if all(isempty.(v))
-        widgets[Symbol(k)] = textarea("")
-    else
-        widgets[Symbol(k)] = dropdown(v)
-    end
-end
-runadd = button("Add")
-# layout
-rung = Grid()
-for (i, kv) in enumerate(widgets)
-    rung[0,i - 1] = Label(first(kv))
-    rung[1,i - 1] = last(kv).widget
-end
-rung[0:1, nmd + 1] = widget(runadd)
-# function
-runsignal = map(runadd) do _
-    Dict(k => value(v) for (k, v) in widgets)
-end
-
-
-# associations
-
-assg = Grid()
-as = loadAssociation(folder)
-as2 = map(merge(poisignal, runsignal), init = as) do x
-    push!(as, x)
-    as
-end
-as2h = map(as2) do a
-    empty!(assg)
-    for (x, t) in enumerate(a.pois)
-        l = Label(string(t.name, ":", t.start.time.value, "-", t.stop.time.value))
-        Gtk.GAccessor.angle(l, -90)
-        assg[x, 0] = l
-    end
-    for (y, r) in enumerate(a.runs)
-        assg[0, y] = Label(shorten(string(join(values(r.metadata), ":")..., ":", r.repetition), 10))
-    end
-    for (x, t) in enumerate(a.pois), (y, r) in enumerate(a.runs)
-        key = (x, y)
-        cb = checkbox(key in a.associations)
-        cbh = map(signal(cb)) do checked²
-            checked² ? push!(a.associations, key) : delete!(a.associations, key)
-        end
-        assg[x, y] = cb.widget
-    end
-    showall(win)
-    return nothing
-end
-
-saves = button("Save")
-quits = button("quit")
-saveh = map(saves, init = nothing) do _
-    visible(win, false)
-    checkvideos(folder, as, win)
-    nothing
-end
-quith = map(quits, init = nothing) do _
-    destroy(win)
-    nothing
-end
-
-
-G = Grid()
-savequit = Box(:v)
-push!(savequit, saves, quits)
-G[0,0] = savequit
-G[0,1] = rung
-G[1,0] = poig
-G[1,1] = assg
-push!(win,G)
-showall(win)
-
-if !isinteractive()
     c = Condition()
     signal_connect(win, :destroy) do _
         notify(c)
@@ -263,3 +118,179 @@ if !isinteractive()
     wait(c)
 end
 
+##################################################
+
+function poirun()
+    win = Window("LogBeetle")
+    folder = "/home/yakir/datasturgeon/projects/marie/projectmanagement/main/testvideos"
+    #folder = open_dialog("Select Dataset Folder", win, action=Gtk.GtkFileChooserAction.SELECT_FOLDER)
+
+    # POI
+
+    files = shorten(getVideoFiles(folder))
+    points = strip.(vec(readcsv(joinpath(folder, "metadata", "poi.csv"), String)))
+    # widgets
+    shortfiles = collect(keys(files))
+    poi = dropdown(points)
+    fstart = dropdown(shortfiles)
+    fstop = dropdown(shortfiles)
+    s1 = spinbutton(0:59, orientation = "v")
+    m1 = spinbutton(0:59, orientation = "v")
+    h1 = spinbutton(0:23, orientation = "v")
+    s2 = spinbutton(0:59, orientation = "v")
+    m2 = spinbutton(0:59, orientation = "v")
+    h2 = spinbutton(0:23, orientation = "v")
+    comment = textarea("")
+    poiadd = button("Add")
+    # layout
+    setproperty!(s1.widget, :width_request, 5)
+    setproperty!(m1.widget, :width_request, 5)
+    setproperty!(h1.widget, :width_request, 5)
+    setproperty!(s2.widget, :width_request, 5)
+    setproperty!(m2.widget, :width_request, 5)
+    setproperty!(h2.widget, :width_request, 5)
+    poig = Grid()
+    poig[0,0] = Label("POI")
+    poig[0,1] = Label("Start")
+    poig[2,0] = Label("H")
+    poig[3,0] = Label("M")
+    poig[4,0] = Label("S")
+    poig[0,2] = Label("Stop")
+    poig[5,0] = Label("Comment")
+    poig[1,0] = poi.widget
+    poig[1,1] = fstart.widget
+    poig[2,1] = h1.widget
+    poig[3,1] = m1.widget
+    poig[4,1] = s1.widget
+    poig[1,2] = fstop.widget
+    poig[2,2] = h2.widget
+    poig[3,2] = m2.widget
+    poig[4,2] = s2.widget
+    poig[5,1:2] = comment.widget
+    poig[6,0:2] = widget(poiadd)
+    # function 
+    tasksstart, resultsstart = async_map(nothing, signal(fstart)) do f²
+        openit(joinpath(folder, files[f²]))
+        return nothing
+    end
+    tasksstop, resultsstop = async_map(nothing, signal(fstop)) do f²
+        openit(joinpath(folder, files[f²]))
+        return nothing
+    end
+    fstar = map(x -> files[x], fstart)
+    fsto = map(x -> files[x], fstop)
+    startPoint = map(Point, fstar, signal(h1), signal(m1), signal(s1))
+    stopPoint = map(Point, fsto, signal(h2), signal(m2), signal(s2))
+    tt = map(POI, signal(poi), startPoint, stopPoint, signal(comment))
+    t = map(_ -> value(tt), poiadd, init = value(tt))
+    goodtime = map(startPoint, stopPoint) do start, stop
+        start.file == stop.file ? start.time <= stop.time : true
+    end
+    poisignal = filterwhen(goodtime, POI(), t)
+
+
+    # run
+
+    # data
+    a = readcsv(joinpath(folder, "metadata", "run.csv"))
+    metadata = Dict{String, Vector{String}}()
+    for i = 1:size(a,1)
+        b = strip.(a[i,:])
+        metadata[b[1]] = filter(x -> !isempty(x), b[2:end])
+    end
+    nmd = length(metadata)
+    # widgets
+    widgets = Dict{Symbol, Union{GtkReactive.Textarea, GtkReactive.Dropdown}}()
+    for (k, v) in metadata
+        if all(isempty.(v))
+            widgets[Symbol(k)] = textarea("")
+        else
+            widgets[Symbol(k)] = dropdown(v)
+        end
+    end
+    runadd = button("Add")
+    # layout
+    rung = Grid()
+    for (i, kv) in enumerate(widgets)
+        rung[0,i - 1] = Label(first(kv))
+        rung[1,i - 1] = last(kv).widget
+    end
+    rung[0:1, nmd + 1] = widget(runadd)
+    # function
+    runsignal = map(runadd) do _
+        Dict(k => value(v) for (k, v) in widgets)
+    end
+
+
+    # associations
+
+    assg = Grid()
+    as = loadAssociation(folder)
+    as2 = map(merge(poisignal, runsignal), init = as) do x
+        push!(as, x)
+        as
+    end
+    as2h = map(as2) do a
+        empty!(assg)
+        for (x, t) in enumerate(a.pois)
+            l = Label(string(t.name, ":", t.start.time.value, "-", t.stop.time.value))
+            Gtk.GAccessor.angle(l, -90)
+            assg[x, 0] = l
+        end
+        for (y, r) in enumerate(a.runs)
+            assg[0, y] = Label(shorten(string(join(values(r.metadata), ":")..., ":", r.repetition), 10))
+        end
+        for (x, t) in enumerate(a.pois), (y, r) in enumerate(a.runs)
+            key = (x, y)
+            cb = checkbox(key in a.associations)
+            cbh = map(signal(cb)) do checked²
+                checked² ? push!(a.associations, key) : delete!(a.associations, key)
+            end
+            assg[x, y] = cb.widget
+        end
+        showall(win)
+        return nothing
+    end
+
+    saves = Button("Save")
+    saveh = signal_connect(saves, :clicked) do _
+        save(folder, as)
+        destroy(win)
+    end
+
+    quits = Button("Quit")
+    quith = signal_connect(quits, :clicked) do _
+        destroy(win)
+    end
+
+    #=saves = button("Save")
+    quits = button("quit")
+    saveh = map(saves, init = nothing) do _
+        save(folder, as)
+        destroy(win)
+        nothing
+    end
+    quith = map(quits, init = nothing) do _
+        exit()
+        nothing
+    end=#
+
+
+    G = Grid()
+    savequit = Box(:v)
+    push!(savequit, saves, quits)
+    G[0,0] = savequit
+    G[0,1] = rung
+    G[1,0] = poig
+    G[1,1] = assg
+    push!(win,G)
+    showall(win)
+
+    c = Condition()
+    signal_connect(win, :destroy) do _
+        notify(c)
+    end
+    wait(c)
+
+    return folder
+end

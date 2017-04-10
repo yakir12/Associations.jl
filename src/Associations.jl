@@ -1,11 +1,11 @@
-#__precompile__()
+__precompile__()
 module Associations
 
 # assuming right now that all durations and times are positive
 
 import Base: push!, ==, empty!
 
-export VideoFile, Point, POI, Run, Association, getVideoFiles, push!, save, shorten, openit, ==, empty!, loadAssociation
+export VideoFile, Point, POI, Run, Association, getVideoFiles, push!, save, shorten, openit, ==, empty!, loadAssociation, loadVideoFiles
 
 const exts = [".webm", ".mkv", ".flv", ".flv", ".vob", ".ogv", ".ogg", ".drc", ".mng", ".avi", ".mov", ".qt", ".wmv", ".yuv", ".rm", ".rmvb", ".asf", ".amv", ".mp4", ".m4p", ".m4v", ".mpg", ".mp2", ".mpeg", ".mpe", ".mpv", ".mpg", ".mpeg", ".m2v", ".m4v", ".svi", ".3gp", ".3g2", ".mxf", ".roq", ".nsv", ".flv", ".f4v", ".f4p", ".f4a", ".f4b", ".MTS", ".DS_Store"]
 
@@ -85,7 +85,7 @@ function save(folder::String, x::Vector{VideoFile})
     for (i, v) in enumerate(x)
         a[i + 1, :] .= [v.file, v.datetime[1]]
     end
-    writecsv(joinpath(folder, "files.csv"), a)
+    writecsv(joinpath(folder, "log", "files.csv"), a)
 end
 
 function save(folder::String, x::Vector{POI}) 
@@ -142,11 +142,10 @@ function empty!(a::Association)
     a.nruns = 0
 end
 
-function save(folder::String, a::Association, vfs::Vector{VideoFile})
+function save(folder::String, a::Association)
     folder = joinpath(folder, "log")
     isdir(folder) || mkdir(folder)
     if a.npois > 0
-        save(folder, vfs)
         save(folder, a.pois)
     end
     if a.nruns > 0
@@ -164,7 +163,7 @@ end
 
 
 function loadVideoFiles(folder::String)::Vector{VideoFile}
-    filescsv = joinpath(folder, "files.csv")
+    filescsv = joinpath(folder, "log", "files.csv")
     vfs = VideoFile[]
     if isfile(filescsv) 
         a, _ = readcsv(filescsv, String, header = true)
@@ -243,6 +242,5 @@ function loadAssociation(folder::String)::Association
 end
 
 
-#include(joinpath(Pkg.dir("Associations"), "src", "utility.jl"))
 
 end # module
