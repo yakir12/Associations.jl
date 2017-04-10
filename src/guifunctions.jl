@@ -122,8 +122,8 @@ end
 
 function poirun()
     win = Window("LogBeetle")
-    folder = "/home/yakir/datasturgeon/projects/marie/projectmanagement/main/testvideos"
-    #folder = open_dialog("Select Dataset Folder", win, action=Gtk.GtkFileChooserAction.SELECT_FOLDER)
+    #folder = "/home/yakir/datasturgeon/projects/marie/projectmanagement/main/testvideos"
+    folder = open_dialog("Select Dataset Folder", win, action=Gtk.GtkFileChooserAction.SELECT_FOLDER)
 
     # POI
 
