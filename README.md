@@ -12,7 +12,10 @@ Associations.jl helps scientists log video files and the experiments associated 
 
 > That's it. Now whenever you double click on the `LogBeetle` file the program will start.
 
-To start the program, open a Julia-terminal, 
+To start the program, open a Julia-terminal, paste: `include(joinpath(Pkg.dir("Associations"), "src", "main.jl"))`
+if this gets stuck, copy the path to the folder with all the videos and paste it like this:
+`include(joinpath(Pkg.dir("Associations"), "src", "main.jl")) PATH_TO_FOLDER`
+where `PATH_TO_FOLDER` is the path to the folder where all the videos are.
 
 ## How to use
 
