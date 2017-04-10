@@ -1,7 +1,7 @@
 using Associations
 using Base.Test
 
-folder = joinpath(Pkg.dir("Associations"), "test", "data")
+folder = joinpath(Pkg.dir("Associations"), "test", "videofolder")
 files = Associations.getVideoFiles(folder)
 vf = [Associations.VideoFile(folder, file) for file in files]
 # write your own tests here
