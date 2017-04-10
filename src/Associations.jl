@@ -538,9 +538,9 @@ function poirun(folder)
     savequit = Box(:v)
     push!(savequit, saves, quits)
     G[0,0] = savequit
-    G[0,1] = rung
-    G[1,0] = poig
-    G[1,1] = assg
+    G[0,1] = Frame(rung, "Run")
+    G[1,0] = Frame(poig, "POI")
+    G[1,1] = Frame(assg, "Associations")
     push!(win,G)
     showall(win)
 
