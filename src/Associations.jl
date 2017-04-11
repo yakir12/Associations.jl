@@ -111,13 +111,17 @@ function push!(xs::Vector{Run}, metadata::Dict{Symbol, String})
 end
 
 function push!(a::Association, t::POI)
-    a.npois += 1
     push!(a.pois, t)
+    #a.npois = length(a.pois)
+    a.npois += 1
+    return a
 end
 
 function push!(a::Association, metadata::Dict{Symbol, String})
-    a.nruns += 1
     push!(a.runs, metadata)
+    #a.nruns = length(a.runs)
+    a.nruns += 1
+    return a
 end
 
 # saves

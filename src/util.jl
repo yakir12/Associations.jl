@@ -1,10 +1,10 @@
 function shorten(s::String, k::Int)::String
     m = length(s)
-    m > 2k || return s
-    s[1:k]*"…"*s[end-k + 1:end]
+    m > 2k + 1 || return s
+    s[1:k]*"…"*s[(end-k + 1):end]
 end
-function shorten(vfs::Vector{String})
-    for k = 20:max(20, maximum(length.(vfs)))
+function shorten(vfs::Vector{String}, nmin = 30)
+    for k = nmin:max(nmin, maximum(length.(vfs)))
         shortnames = Dict{String, String}()
         tooshort = false
         for vf in vfs
