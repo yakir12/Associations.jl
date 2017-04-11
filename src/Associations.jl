@@ -8,10 +8,9 @@ import Base: push!, ==, empty!
 #export VideoFile, Point, POI, Run, Association, getVideoFiles, push!, save, shorten, openit, ==, empty!, loadAssociation, loadVideoFiles
 export poirun, checkvideos
 
-path = joinpath(Pkg.dir("Associations"), "deps/src")
+path = joinpath("..", "deps", "src")
 folders = readdir(path)
-filter!(r"exiftool"i, folders)
-exiftool = joinpath(Pkg.dir("Associations"), "deps/src", folders[1], "exiftool")
+exiftool = joinpath(path, last(folders), "exiftool")
 
 const exts = [".webm", ".mkv", ".flv", ".flv", ".vob", ".ogv", ".ogg", ".drc", ".mng", ".avi", ".mov", ".qt", ".wmv", ".yuv", ".rm", ".rmvb", ".asf", ".amv", ".mp4", ".m4p", ".m4v", ".mpg", ".mp2", ".mpeg", ".mpe", ".mpv", ".mpg", ".mpeg", ".m2v", ".m4v", ".svi", ".3gp", ".3g2", ".mxf", ".roq", ".nsv", ".flv", ".f4v", ".f4p", ".f4a", ".f4b", ".MTS", ".DS_Store"]
 
@@ -35,11 +34,25 @@ function VideoFile(folder::String, file::String)
     VideoFile(file, [datetime])
 end
 
+function getVideoFiles(folder::String)
+    #old = uploadsavedVideoFiles(folder)
+    new = String[]
+    for (root, dir, files) in walkdir(folder)
+        for file in files
+            file[1] == '.' && continue
+            last(splitext(file)) in exts || continue
+            fname = relpath(joinpath(root, file), folder)
+            push!(new, fname)
+        end
+    end
+    return new
+end
 
 immutable Point
     file::String
     time::Dates.Second
 end
+
 Point(f::String, h::Int, m::Int, s::Int) = Point(f, sum(Dates.Second.([Dates.Hour(h), Dates.Minute(m), Dates.Second(s)])))
 
 ==(a::Point, b::Point) = a.file == b.file && a.time == b.time
@@ -51,7 +64,6 @@ immutable POI
     comment::String
 end
 
-
 function POI()
     p = Point("", Dates.Second(0))
     return POI("", p, p, "")
@@ -59,11 +71,25 @@ end
 
 ==(a::POI, b::POI) = a.name == b.name && a.comment == b.comment && a.start == b.start && a.stop == b.stop
 
-
 immutable Run
     metadata::Dict{Symbol, String}
     repetition::Int
 end
+
+type Association
+    pois::Vector{POI}
+    npois::Int
+    runs::Vector{Run}
+    nruns::Int
+    associations::Set{Tuple{Int, Int}}
+    Association(t, r, a) = new(t, length(t), r, length(r), a)
+end
+
+Association() = Association(POI[], Run[], Set())
+
+
+
+# pushes
 
 function push!(xs::Vector{Run}, metadata::Dict{Symbol, String})
     repetition = 0
@@ -83,6 +109,18 @@ function push!(xs::Vector{Run}, metadata::Dict{Symbol, String})
     r = Run(metadata, repetition + 1)
     push!(xs, r)
 end
+
+function push!(a::Association, t::POI)
+    a.npois += 1
+    push!(a.pois, t)
+end
+
+function push!(a::Association, metadata::Dict{Symbol, String})
+    a.nruns += 1
+    push!(a.runs, metadata)
+end
+
+# saves
 
 function save(folder::String, x::Vector{VideoFile})
     n = length(x)
@@ -120,34 +158,6 @@ function save(folder::String, x::Vector{Run})
     writecsv(joinpath(folder, "runs.csv"), a)
 end
 
-type Association
-    pois::Vector{POI}
-    npois::Int
-    runs::Vector{Run}
-    nruns::Int
-    associations::Set{Tuple{Int, Int}}
-    Association(t, r, a) = new(t, length(t), r, length(r), a)
-end
-
-Association() = Association(POI[], Run[], Set())
-
-function push!(a::Association, t::POI)
-    a.npois += 1
-    push!(a.pois, t)
-end
-
-function push!(a::Association, metadata::Dict{Symbol, String})
-    a.nruns += 1
-    push!(a.runs, metadata)
-end
-
-function empty!(a::Association)
-    empty!(a.pois)
-    empty!(a.runs)
-    a.npois = 0
-    a.nruns = 0
-end
-
 function save(folder::String, a::Association)
     folder = joinpath(folder, "log")
     isdir(folder) || mkdir(folder)
@@ -167,6 +177,7 @@ function save(folder::String, a::Association)
     end
 end
 
+# loads
 
 function loadVideoFiles(folder::String)::Vector{VideoFile}
     filescsv = joinpath(folder, "log", "files.csv")
@@ -180,20 +191,6 @@ function loadVideoFiles(folder::String)::Vector{VideoFile}
         end
     end
     return vfs
-end
-
-function getVideoFiles(folder::String)
-    #old = uploadsavedVideoFiles(folder)
-    new = String[]
-    for (root, dir, files) in walkdir(folder)
-        for file in files
-            file[1] == '.' && continue
-            last(splitext(file)) in exts || continue
-            fname = relpath(joinpath(root, file), folder)
-            push!(new, fname)
-        end
-    end
-    return new
 end
 
 function loadPOIs(folder::String)::Vector{POI}
@@ -245,6 +242,15 @@ function loadAssociation(folder::String)::Association
         end
     end
     return Association(ts, rs, as)
+end
+
+# empty
+
+function empty!(a::Association)
+    empty!(a.pois)
+    empty!(a.runs)
+    a.npois = 0
+    a.nruns = 0
 end
 
 include(joinpath(Pkg.dir("Associations"), "src", "util.jl"))

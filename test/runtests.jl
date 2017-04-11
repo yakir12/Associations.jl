@@ -1,7 +1,7 @@
 using Associations
 using Base.Test
 
-folder = joinpath(Pkg.dir("Associations"), "test", "videofolder")
+#=folder = joinpath(Pkg.dir("Associations"), "test", "videofolder")
 files = Associations.getVideoFiles(folder)
 vf = [Associations.VideoFile(folder, file) for file in files]
 a = [Associations.VideoFile("a.mp4",[DateTime("2017-02-28T16:04:47")]), Associations.VideoFile("b.mp4",[DateTime("2017-03-02T15:38:25")])]
@@ -12,4 +12,16 @@ for file in files
     ai = filter(x -> x.file == file, a)
     v = filter(x -> x.file == file, vf)
     @test ai == v
+end=#
+
+# some base variables
+videofolder = "videofolder"
+videofiles = Associations.getVideoFiles(videofolder)
+
+# test the 
+@testset "exiftool executable can run on video: $file" for file in videofiles
+    f = joinpath(videofolder, file)
+    a = readstring(`$(Associations.exiftool) -q -q $f`)
+    @test !isempty(a)
 end
+
