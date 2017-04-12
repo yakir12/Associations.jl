@@ -8,9 +8,10 @@ import Base: push!, ==, empty!
 #export VideoFile, Point, POI, Run, Association, getVideoFiles, push!, save, shorten, openit, ==, empty!, loadAssociation, loadVideoFiles
 export poirun, checkvideos
 
-path = joinpath("..", "deps", "src")
-folders = readdir(path)
-exiftool = joinpath(path, last(folders), "exiftool")
+exiftool = joinpath(Pkg.dir("Associations"), "deps", "src", "exiftool", "exiftool")
+#=@static if is_windows()
+    exiftool *= ".exe"
+end=#
 
 const exts = [".webm", ".mkv", ".flv", ".flv", ".vob", ".ogv", ".ogg", ".drc", ".mng", ".avi", ".mov", ".qt", ".wmv", ".yuv", ".rm", ".rmvb", ".asf", ".amv", ".mp4", ".m4p", ".m4v", ".mpg", ".mp2", ".mpeg", ".mpe", ".mpv", ".mpg", ".mpeg", ".m2v", ".m4v", ".svi", ".3gp", ".3g2", ".mxf", ".roq", ".nsv", ".flv", ".f4v", ".f4p", ".f4a", ".f4b", ".MTS", ".DS_Store"]
 
