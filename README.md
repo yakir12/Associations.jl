@@ -34,7 +34,7 @@ By tagging the POIs, registering the various experimental runs you conducted, an
 ### File hierarchy
 To tag the POIs, the user must supply the program with a list of possible POI-tags. This list should include all the possible names of the POIs. Similarly, the program must have a list of all the possible metadata for the experimental runs. This is achieved with two necessary `csv` files: `poi.csv` and `run.csv`.
 
-The program will process all the video files within a given folder. While the organization of the video files within this folder doesn't matter at all (e.g. video files can be spread across nested folders), the folder *must* contain a folder called `metadata`. This `metadata` folder contains the `poi.csv` and `run.csv` files. 
+The program will process all the video files within a given folder. While the organization of the video files within this folder doesn't matter at all (e.g. video files can be spread across nested folders), **the folder *must* contain a folder called `metadata`. This `metadata` folder *must* contain the `poi.csv` and `run.csv` files.**
 
 ```
 videos
@@ -70,12 +70,14 @@ Condition, Transfered, Covered
 Specimen ID,
 Comments,
 ```
-Each row describes a metadatum. The first field (fields are separated by a comma) describes the name of that specific metadatum. The following fields are the possible values said metadatum can have. In case the metadatum can not be limited to a finite number of discrete values and can only be described in free-text, leave the following fields empty (as in the case of the `Specimen ID` and `Comments` in the example above).
+Each row describes a metadatum. The first field (fields are separated by a comma) describes the name of that specific metadatum. The fields following that are the possible values said metadatum can have. For instance, in the example above, `Condition` can take only two values: `Transfered` or `Covered`. In case the metadatum can not be limited to a finite number of discrete values and can only be described in free-text, leave the following fields empty (as in the case of the `Specimen ID` and `Comments` in the example above).
 
 You can have as many or as few metadata as you like, keeping only the metadata and POIs that are relevant to your specific setups. This flexibility allows the user to keep different `poi.csv` and `run.csv` metadata files in each of their video-folders.
 
+Note that apart from the requirement that a `metadata` folder contain the two `poi.csv` and `run.csv` files, **the values (i.e. fields) in these files must be delimited by a comma** (as shown in the example above). You can produce these two files using your favourite word editor (or excel), but make sure the file extension is `csv` and that the delimiter is a comma.
+
 ### Instructions
-After launching the program, in the initial window, navigate and choose the folder that contains all the videos that you want to log (choose the folder itself, not a file inside the folder). A new window will appear, where you can add new POIs and Runs. In the POI section the user can choose a specific POI to log, a video file and time stamp where the POI starts, a video file and time stamp where the POI ends, and a comment (choosing a video file starts running it automatically, pressing `Add` adds the specific POI to the registry). In the Run section the user can edit a run by setting the correct metadata and pressing `Add`. After adding some POIs and Runs, the window will be populated with rows of runs and columns of POIs. Use the checkboxes to indicate the associations between the Runs and POIs. 
+Once you've prepared the `metadata` folder and the two `csv` files, start the program. After launching the program, in the initial window, navigate and choose the folder that contains all the videos that you want to log (choose the folder itself, not a file inside the folder). A new window will appear, where you can add new POIs and Runs. In the POI section the user can choose a specific POI to log, a video file and time stamp where the POI starts, a video file and time stamp where the POI ends, and a comment (choosing a video file starts running it automatically, pressing `Add` adds the specific POI to the registry). In the Run section the user can edit a run by setting the correct metadata and pressing `Add`. After adding some POIs and Runs, the window will be populated with rows of runs and columns of POIs. Use the checkboxes to indicate the associations between the Runs and POIs. 
 
 When done, press `Done`. While the program attempts to automatically extract the original filming date and time the video file was taped, it is *imperrative* that you make sure these are indeed correct. You will be presented with another window containing all the videos you logged and their dates and times. Adjust these accordingly (pressing the video filename starts playing the video). When finished press `Done`.
 
