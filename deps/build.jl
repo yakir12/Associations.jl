@@ -40,5 +40,5 @@ if is_windows()
         CreateDirectory(joinpath(basedir, "src", "exiftool"))
         end
        )
-    mv(joinpath(basedir, "src", target), joinpath("src", "exiftool", program))
+    mv(joinpath(basedir, "src", target), joinpath("src", "exiftool", binary_name))
 end
