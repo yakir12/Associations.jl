@@ -2,11 +2,10 @@ using Associations
 using Base.Test
 
 chars = []
-a = """!"#¤%&/()=?*_:;><,.-'§½`'äöåÄÖÅ\\\n """
+a = """!"#¤%&/()=?*_:;><,.-'§½`'äöåÄÖÅ\\\n \t\b"""
 for i in a
     push!(chars, i)
 end
-push!(chars, '\t', '\b')
 getstring(n = 1000) = join(rand(chars, n))
 
 # some base variables

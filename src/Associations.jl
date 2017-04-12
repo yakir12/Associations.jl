@@ -239,7 +239,7 @@ function loadAssociation(folder::String)::Association
     filescsv = joinpath(folder, "associations.csv")
     as = Set{Tuple{Int, Int}}()
     if isfile(filescsv) 
-        a, ks = readcsv(filescsv, Int, header = true, quotes = true)
+        a, ks = readcsv(filescsv, Int, header = true)
         nrow, ncol = size(a)
         @assert ncol == 2
         for i = 1:nrow
