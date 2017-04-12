@@ -1,7 +1,7 @@
 # Associations
-Associations.jl helps scientists log video files and the experiments associated with these files.
+`Associations.jl` helps scientists log video files and the experiments associated with these files.
 
-[![Build Status](https://travis-ci.org/yakir12/Associations.jl.svg?branch=master)](https://travis-ci.org/yakir12/Associations.jl)
+[![Build Status](https://travis-ci.org/yakir12/Associations.jl.svg?branch=master)](https://travis-ci.org/yakir12/Associations.jl) [![Build status](https://ci.appveyor.com/api/projects/status/x6gx5vx5chjhchl7?svg=true)](https://ci.appveyor.com/project/yakir12/associations-jl)
 
 [![codecov.io](http://codecov.io/github/yakir12/Associations.jl/coverage.svg?branch=master)](http://codecov.io/github/yakir12/Associations.jl?branch=master)
 
@@ -13,26 +13,14 @@ Associations.jl helps scientists log video files and the experiments associated 
 4. To test the package (not necessary), copy: `Pkg.test("Associations")` and paste it in the Julia-terminal, press enter
 5. You can close the Julia-terminal after it's done running
 
-To start the program, open a Julia-terminal, and paste:
-```julia
-using Associations
-folder = Gtk.open_dialog("Select Dataset Folder", action=Gtk.GtkFileChooserAction.SELECT_FOLDER)
-poirun(folder)
-checkvideos(folder)
-```
-If the the dialog box gets stuck, try this instead, where `PATH_TO_FOLDER` is the path to the folder where all the videos are:
-```julia
-using Associations
-folder = PATH_TO_FOLDER
-poirun(folder)
-checkvideos(folder)
-```
-So replace `PATH_TO_FOLDER` with the path to the videos-folder.
+The user's interaction with this package is via GUI. You will find an executable file called `BeetleLog.jl` in your home directory. Double-click it to start the program.
 
 ## How to use
 
 ### Rational 
-Recording, processing, and analysing videos of (behavioral) experiments usually includes some manual involvement. This manual component might only include renaming and organizing video files, but could also include manually tracking objects in the videos. The purpose of this package is to standardize your data at the earliest stage possible so that any subsequent manual involvement from your part would be as easy and robust as possible. This allows for streamlining the flow of your data from the original raw-format video files to the publishable figures showing the results of your analysis.
+Recording, processing, and analysing videos of (behavioral) experiments usually includes some manual involvement. This manual component might only include renaming and organizing video files, but could also include manually tracking objects. The purpose of this package is to standardize your data at the earliest possible stage so that any subsequent manual involvement would be as easy and robust as possible. This allows for streamlining the flow of your data from the original raw-format video-files to the publishable figures showing the results of your analysis.
+
+setup experiment -> record videos -> rename videos -> organize files into categorical folders -> track objects in the videos -> collate tracking data into their experiemntal context -> process (camera) calibrations -> process the positions (normalizing directions and origin points
 
 When logging videotaped experiments, it is useful to think of the whole process in terms of 4 different "entities":
 
