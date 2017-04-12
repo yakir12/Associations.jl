@@ -3,9 +3,9 @@ language: julia
 os:
   - linux
   - osx
-  - windows
 julia:
   - release
+sudo: required
 notifications:
   email: false
 # uncomment the following lines to override the default test script
