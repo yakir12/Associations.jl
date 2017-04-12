@@ -3,4 +3,3 @@
 *.jl.*.cov
 *.jl.mem
 deps/**
-test/videofolder/log
