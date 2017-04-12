@@ -5,13 +5,11 @@ Associations.jl helps scientists log video files and the experiments associated 
 ## How to install
 
 1. Install [Julia](https://julialang.org/downloads/) -> you should be able to launch it (some icon on the Desktop or some such)
-2. start Julia -> a Julia-terminal popped up
+2. Start Julia -> a Julia-terminal popped up
 3. Copy: `Pkg.clone("git://github.com/yakir12/Associations.jl.git")` and paste it in the newly opened Julia-terminal, press Enter
 4. Copy: `Pkg.build("Associations")` and paste it in the Julia-terminal, press Enter
-5. You can close the Julia-terminal after it's done running
-> 6. Download the `LogBeetle` file, put it somewhere nice (the Desktop?)
-
-> That's it. Now whenever you double click on the `LogBeetle` file the program will start.
+5. To test the package (not necessary), copy: `Pkg.test("Associations")` and paste it in the Julia-terminal, press enter
+6. You can close the Julia-terminal after it's done running
 
 To start the program, open a Julia-terminal, and paste:
 ```julia
@@ -20,7 +18,7 @@ folder = Gtk.open_dialog("Select Dataset Folder", action=Gtk.GtkFileChooserActio
 poirun(folder)
 checkvideos(folder)
 ```
-if the the dialog box gets stuck, try this instead, where `PATH_TO_FOLDER` is the path to the folder where all the videos are:
+If the the dialog box gets stuck, try this instead, where `PATH_TO_FOLDER` is the path to the folder where all the videos are:
 ```julia
 using Associations
 folder = PATH_TO_FOLDER
@@ -32,6 +30,8 @@ So replace `PATH_TO_FOLDER` with the path to the videos-folder.
 ## How to use
 
 ### Rational 
+Recording, processing, and analysing videos of (behavioral) experiments usually includes some manual involvement. This manual component might only include renaming and organizing video files, but could also include manually tracking objects in the videos. The purpose of this package is to standardize your data at the earliest stage possible so that any subsequent manual involvement from your part would be as easy and robust as possible. This allows for streamlining the flow of your data from the original raw-format video files to the publishable figures showing the results of your analysis.
+
 When logging videotaped experiments, it is useful to think of the whole process in terms of 4 different "entities":
 
 1. **Video files**: the individual video files. One may contain a part, a whole, or multiple experimental runs. 
