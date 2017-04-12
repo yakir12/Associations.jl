@@ -7,7 +7,7 @@
 
 ## How to install
 
-1. If you haven't already, install [Julia](https://julialang.org/downloads/) -> you should be able to launch it (some icon on the Desktop or some such)
+1. If you haven't already, install [Julia v0.6 (Nightly builds)](https://julialang.org/downloads/) -> you should be able to launch it (some icon on the Desktop or some such)
 2. Start Julia -> a Julia-terminal popped up
 3. Copy: `Pkg.clone("git://github.com/yakir12/Associations.jl.git") && Pkg.build("Associations")` and paste it in the newly opened Julia-terminal, press Enter
 4. To test the package (not necessary), copy: `Pkg.test("Associations")` and paste it in the Julia-terminal, press enter
