@@ -21,27 +21,32 @@ filename = file*extension
 url = "http://www.sno.phy.queensu.ca/~phil/exiftool/$filename"
 
 if is_unix()
-run(
-    @build_steps begin
-    FileDownloader(url, joinpath(basedir, "downloads", filename))
-    CreateDirectory(joinpath(basedir, "src"))
-    FileUnpacker(joinpath(basedir, "downloads", filename), joinpath(basedir, "src"), "")
-    end
-   )
+    run(
+        @build_steps begin
+        FileDownloader(url, joinpath(basedir, "downloads", filename))
+        CreateDirectory(joinpath(basedir, "src"))
+        FileUnpacker(joinpath(basedir, "downloads", filename), joinpath(basedir, "src"), "")
+        end
+       )
     mv(joinpath(basedir, "src", file), joinpath(basedir, "src", "exiftool"), remove_destination = true)
 end
 
 if is_windows()
-run(
-    @build_steps begin
-    FileDownloader(url, joinpath(basedir, "downloads", filename))
-    CreateDirectory(joinpath(basedir, "src"))
-    FileUnpacker(joinpath(basedir, "downloads", filename), joinpath(basedir, "src"), target)
-    end
-   )
+    run(
+        @build_steps begin
+        FileDownloader(url, joinpath(basedir, "downloads", filename))
+        CreateDirectory(joinpath(basedir, "src"))
+        FileUnpacker(joinpath(basedir, "downloads", filename), joinpath(basedir, "src"), target)
+        CreateDirectory(joinpath(basedir, "src", "exiftool"))
+        end
+       )
+    #d = joinpath(basedir, "src", "exiftool")
+    #isdir(d) && rm(d, recursive = true)
+    #mkdir(d)
+    mv(joinpath(basedir, "src", target), joinpath("src", "exiftool", program))
 
-isdir(joinpath(basedir, "src", "exiftool")) && rm(joinpath(basedir, "src", "exiftool"), recursive = true)
-mkdir(joinpath(basedir, "src", "exiftool"))
+    #=isdir(joinpath(basedir, "src", "exiftool")) && rm(joinpath(basedir, "src", "exiftool"), recursive = true)
+    mkdir(joinpath(basedir, "src", "exiftool"))
     mv(joinpath(basedir, "src", target), joinpath(basedir, "src", "exiftool", binary_name))
-    cp(joinpath(basedir, "src", "exiftool",binary_name), joinpath(basedir, "src", "exiftool", program))
+    cp(joinpath(basedir, "src", "exiftool",binary_name), joinpath(basedir, "src", "exiftool", program))=#
 end
