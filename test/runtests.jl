@@ -95,6 +95,7 @@ end
         for f in readdir(joinpath(testlog, "log"))
             #@test readstring(joinpath(testlog, "log", f)) == readstring(joinpath(videofolder, "log", f)) 
         end
+        isdir(testlog) && rm(testlog, recursive = true)
     end
 end
 
