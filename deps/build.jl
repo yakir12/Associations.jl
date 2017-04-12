@@ -40,13 +40,5 @@ if is_windows()
         CreateDirectory(joinpath(basedir, "src", "exiftool"))
         end
        )
-    #d = joinpath(basedir, "src", "exiftool")
-    #isdir(d) && rm(d, recursive = true)
-    #mkdir(d)
     mv(joinpath(basedir, "src", target), joinpath("src", "exiftool", program))
-
-    #=isdir(joinpath(basedir, "src", "exiftool")) && rm(joinpath(basedir, "src", "exiftool"), recursive = true)
-    mkdir(joinpath(basedir, "src", "exiftool"))
-    mv(joinpath(basedir, "src", target), joinpath(basedir, "src", "exiftool", binary_name))
-    cp(joinpath(basedir, "src", "exiftool",binary_name), joinpath(basedir, "src", "exiftool", program))=#
 end
