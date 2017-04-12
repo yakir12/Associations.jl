@@ -55,7 +55,7 @@ end
     nruns = 4
     p = fill(Associations.POI(), npois)
     r = Associations.Run[]
-    dicts = repeated(Dict(:comment => getstring(), :name => getstring(3)), nruns)
+    dicts = [Dict(:comment => getstring(), :name => getstring(3)) for i = 1:nruns]
     for d in dicts
         push!(r, d)
     end
