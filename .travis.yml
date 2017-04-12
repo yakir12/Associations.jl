@@ -11,6 +11,7 @@ notifications:
 # uncomment the following lines to override the default test script
 script:
  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+ - if [[ `uname` = "Linux" ]]; then TESTCMD="xvfb-run julia"; else TESTCMD="julia"; fi
  - julia -e 'Pkg.clone(pwd()); Pkg.build("Associations"); Pkg.test("Associations"; coverage=true)'
 after_success:
   # push coverage results to Coveralls
