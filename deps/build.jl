@@ -43,5 +43,5 @@ run(
 isdir(joinpath(basedir, "src", "exiftool")) && rm(joinpath(basedir, "src", "exiftool"), recursive = true)
 mkdir(joinpath(basedir, "src", "exiftool"))
     mv(joinpath(basedir, "src", target), joinpath(basedir, "src", "exiftool", binary_name))
-    symlink(joinpath(basedir, "src", "exiftool",binary_name), joinpath(basedir, "src", "exiftool", program))
+    cp(joinpath(basedir, "src", "exiftool",binary_name), joinpath(basedir, "src", "exiftool", program))
 end
