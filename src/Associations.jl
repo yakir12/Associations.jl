@@ -134,7 +134,7 @@ function save(folder::String, x::Vector{VideoFile})
     for (i, v) in enumerate(x)
         a[i + 1, :] .= [v.file, v.datetime[1]]
     end
-    writecsv(joinpath(folder, "log", "files.csv"), a)
+    writecsv(joinpath(folder, "log", "files.csv"), a, quotes = true)
 end
 
 function save(folder::String, x::Vector{POI}) 
@@ -144,7 +144,7 @@ function save(folder::String, x::Vector{POI})
     for (i, t) in enumerate(x)
         a[i + 1, :] .= [t.name, t.start.file, t.start.time.value, t.stop.file, t.stop.time.value, t.comment]
     end
-    writecsv(joinpath(folder, "pois.csv"), a)
+    writecsv(joinpath(folder, "pois.csv"), a, quotes = true)
 end
 
 function save(folder::String, x::Vector{Run})
@@ -160,7 +160,7 @@ function save(folder::String, x::Vector{Run})
         end
         a[i + 1, end] = r.repetition
     end
-    writecsv(joinpath(folder, "runs.csv"), a)
+    writecsv(joinpath(folder, "runs.csv"), a, quotes = true)
 end
 
 function save(folder::String, a::Association)
@@ -188,7 +188,7 @@ function loadVideoFiles(folder::String)::Vector{VideoFile}
     filescsv = joinpath(folder, "log", "files.csv")
     vfs = VideoFile[]
     if isfile(filescsv) 
-        a, _ = readcsv(filescsv, String, header = true)
+        a, _ = readcsv(filescsv, String, header = true, quotes = true)
         a .= strip.(a)
         nrow, ncol = size(a)
         for i = 1:nrow
@@ -202,7 +202,7 @@ function loadPOIs(folder::String)::Vector{POI}
     filescsv = joinpath(folder, "pois.csv")
     tgs = POI[]
     if isfile(filescsv) 
-        a, _ = readcsv(filescsv, String, header = true)
+        a, _ = readcsv(filescsv, String, header = true, quotes = true)
         a .= strip.(a)
         nrow, ncol = size(a)
         for i = 1:nrow
@@ -216,7 +216,7 @@ function loadRuns(folder::String)::Vector{Run}
     filescsv = joinpath(folder, "runs.csv")
     rs = Run[]
     if isfile(filescsv) 
-        a, ks = readcsv(filescsv, String, header = true)
+        a, ks = readcsv(filescsv, String, header = true, quotes = true)
         ks = Symbol.(strip.(ks))
         a .= strip.(a)
         nrow, ncol = size(a)
@@ -239,7 +239,7 @@ function loadAssociation(folder::String)::Association
     filescsv = joinpath(folder, "associations.csv")
     as = Set{Tuple{Int, Int}}()
     if isfile(filescsv) 
-        a, ks = readcsv(filescsv, Int, header = true)
+        a, ks = readcsv(filescsv, Int, header = true, quotes = true)
         nrow, ncol = size(a)
         @assert ncol == 2
         for i = 1:nrow
