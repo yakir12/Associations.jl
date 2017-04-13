@@ -49,7 +49,7 @@ By tagging the POIs, registering the various experimental runs you conducted, an
 ### File hierarchy
 To tag the POIs, the user must supply the program with a list of possible POI-tags. This list should include all the possible names of the POIs. Similarly, the program must have a list of all the possible metadata for the experimental runs. This is achieved with two necessary `csv` files: `poi.csv` and `run.csv`.
 
-The program will process all the video files within a given folder. While the organization of the video files within this folder doesn't matter at all (e.g. video files can be spread across nested folders), **the folder *must* contain a folder called `metadata`. This `metadata` folder *must* contain the `poi.csv` and `run.csv` files.**
+The program will process all the video files within a given folder. While the organization of the video files within this folder doesn't matter at all (e.g. video files can be spread across nested folders), **the video folder *must* contain another folder called `metadata`. This `metadata` folder *must* contain the `poi.csv` and `run.csv` files:**
 
 ```
 videos
@@ -90,6 +90,8 @@ Each row describes a metadatum. The first field (fields are separated by a comma
 You can have as many or as few metadata as you like, keeping only the metadata and POIs that are relevant to your specific setups. This flexibility allows the user to keep different `poi.csv` and `run.csv` metadata files in each of their video-folders.
 
 Note that apart from the requirement that a `metadata` folder contain the two `poi.csv` and `run.csv` files, **the values (i.e. fields) in these files must be delimited by a comma** (as shown in the example above). You can produce these two files using your favourite word editor (or excel), but make sure the file extension is `csv` and that the delimiter is a comma.
+
+An example of this file hierarchy, the metadata folder, and the two `csv` files is available [here](test/videofolder).
 
 ### Instructions
 Once you've prepared the `metadata` folder and the two `csv` files, start the program. After launching the program, in the initial window, navigate and choose the folder that contains all the videos that you want to log (choose the folder itself, not a file inside the folder). A new window will appear, where you can add new POIs and Runs. In the POI section the user can choose a specific POI to log, a video file and time stamp where the POI starts, a video file and time stamp where the POI ends, and a comment (choosing a video file starts running it automatically, pressing `Add` adds the specific POI to the registry). In the Run section the user can edit a run by setting the correct metadata and pressing `Add`. After adding some POIs and Runs, the window will be populated with rows of runs and columns of POIs. Use the checkboxes to indicate the associations between the Runs and POIs. 
