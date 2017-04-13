@@ -110,7 +110,7 @@ end
     @test all(length(Associations.shorten("a"^x, y)) == (x <= 2y + 1 ? x : 2y + 1) for x = 0:8, y = 0:3)
 
     function testit(x, y)
-        txt = ["a"^i for i = 1:x]
+        txt = [join(select('a':'z', 1:i)) for i = 1:10]
         Associations.shorten(txt, y)
     end
 
