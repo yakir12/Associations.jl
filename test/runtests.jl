@@ -113,6 +113,6 @@ end
 
     @test all(all(length(k) == min(length(v), 2y + 1) for (k,v) in testit(x, y)) for x = 1:8, y = 1:3)
 
-    @test_throws ErrorException Associations.openit("thisfiledoesnotexist.666")
+    @test_throws SystemError Associations.openit("thisfiledoesnotexist.666")
 
 end
