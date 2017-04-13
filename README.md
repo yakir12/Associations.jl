@@ -18,9 +18,19 @@ The user's interaction with this package is via GUI. You will find an executable
 ## How to use
 
 ### Rational 
-Recording, processing, and analysing videos of (behavioral) experiments usually includes some manual involvement. This manual component might only include renaming and organizing video files, but could also include manually tracking objects. The purpose of this package is to standardize your data at the earliest possible stage so that any subsequent manual involvement would be as easy and robust as possible. This allows for streamlining the flow of your data from the original raw-format video-files to the publishable figures showing the results of your analysis.
+Recording, processing, and analysing videos of (behavioral) experiments usually includes some kind of manual work. This manual component might only include renaming and organizing video files, but could also mean manually tracking objects. The purpose of this package is to standardize your data at the earliest possible stage so that any subsequent manual involvement would be as easy and robust as possible. This allows for streamlining the flow of your data from the original raw-format video-files to the results of your analysis.
 
-setup experiment -> record videos -> rename videos -> organize files into categorical folders -> track objects in the videos -> collate tracking data into their experiemntal context -> process (camera) calibrations -> process the positions (normalizing directions and origin points
+A typical workflow might look like this:
+```
+setup experiment -> run experiment & record videos -> rename videos -> organize files into categorical folders -> track objects in the videos -> collate tracking data into their experiemntal context -> process (camera) calibrations -> process the positions (normalizing directions, origin points, distances, relative sizes, relative landmarks, temporal events, etc.) -> run analysis on the positional data
+```
+The researcher is often required to manually perform some of these steps. While this manual envolvement is insignificant in small, one-person, projects, it could intoduce errors in larger projects. Indeed, in projects that involve multiple investigators, span across many years, and involve different experiments, manual organisation is simply not practical. 
+
+The objective of this package is to constrain and control the points where manual involvement is unavoidable. By taking care of the manual component of the process as early as possible, we:
+
+1) allow for greater flexability in subsequent stages of the analysis, 
+2) garauntee that the data is kept at its original form,
+3) pave the way for efficient automation of later stages in the analysis.
 
 When logging videotaped experiments, it is useful to think of the whole process in terms of 4 different "entities":
 
