@@ -105,3 +105,19 @@ You will now find a new folder, `log`, in the videos folder with 4 files in it:
 4. `associations.csv`: A two column table where the first column is the POI number and the second column is the Run number (both relative to the row numbers in the `pois.csv` and `runs.csv` files, excluding the header row of course). 
 
 That's it! These 4 files contain *all* the necessary information for later processing of your videos. If the objects in your videos can be tracked automatically then no further manual involvement is necessary. If the nature of the videos and objects in them prohibits automatic tracking, manual tracking of the objects can now be conveniently semi-automated. 
+
+## Troubleshooting
+- *The initial navigation window is stuck, I can't choose the videos folder*
+If this happens you'll have to run the program from within Julia:
+1. Start a Julia-terminal
+2. Copy and paste the following code in the Julia-terminal:
+   ```julia
+   using Associations
+   folder = "<videos folder>"
+   poirun(folder)
+   checkvideos(folder)
+   ```
+   where `<videos folder>` is the path to the folder that contains all the videos you want to log (so replace `<videos folder>` with the actual path to your videos folder). 
+3. The program will run normally, and you can close the Julia terminal when you're done logging your videos.
+   
+
