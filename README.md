@@ -17,7 +17,7 @@ The user's interaction with this package is via GUI. You will find an executable
 ## How to use
 
 ### Rational 
-Recording, processing, and analysing videos of (behavioral) experiments usually includes some kind of manual work. This manual component might only include renaming and organizing video files, but could also mean manually tracking objects. The purpose of this package is to standardize your data at the earliest possible stage so that any subsequent manual involvement would be as easy and robust as possible. This allows for streamlining the flow of your data from the original raw-format video-files to the results of your analysis.
+Recording, processing, and analysing videos of (behavioral) experiments usually includes some kind of manual work. This manual component might only include renaming and organizing video files, but could also mean manually tracking objects. The purpose of this package is to standardize your data at the earliest possible stage so that any subsequent manual involvement would be as easy and robust as possible. This allows for streamlining the flow of your data from the original raw-format video files to the results of your analysis.
 
 A typical workflow might look like this:
 1. Setup experiment 
@@ -25,17 +25,17 @@ A typical workflow might look like this:
 3. Rename videos 
 4. Organize files into categorical folders 
 5. Track objects in the videos 
-6. Collate tracking data into their experiemntal context 
+6. Collate tracking data into their experimental context 
 7. Process (camera) calibrations 
 8. Process the positions (normalizing directions, origin points, relative landmarks, etc.) 
 9. Run analysis on the positional data
 10. Produce figures
 
-The researcher is often required to manually perform some of these steps. While this manual envolvement is insignificant in small, one-person, projects, it could intoduce errors in larger projects. Indeed, in projects that involve multiple investigators, span across many years, and involve different experiments, manual organisation is simply not practical. 
+The researcher is often required to manually perform some of these steps. While this manual involvement is insignificant in small, one-person, projects, it could introduce errors in larger projects. Indeed, in projects that involve multiple investigators, span across many years, and involve different experiments, manual organisation is simply not practical. 
 
 The objective of this package is to constrain and control the points where manual involvement is unavoidable. By taking care of the manual component of the process as early as possible, we:
-1. allow for greater flexability in subsequent stages of the analysis, 
-2. garauntee that the data is kept at its original form,
+1. allow for greater flexibility in subsequent stages of the analysis, 
+2. guarantee that the data is kept at its original form,
 3. pave the way for efficient automation of later stages in the analysis.
 
 When logging videotaped experiments, it is useful to think of the whole process in terms of 4 different "entities":
@@ -49,10 +49,10 @@ By tagging the POIs, registering the various experimental runs you conducted, an
 ### File hierarchy
 To tag the POIs, the user must supply the program with a list of possible POI-tags. This list should include all the possible names of the POIs. Similarly, the program must have a list of all the possible metadata for the experimental runs. This is achieved with two necessary `csv` files: `poi.csv` and `run.csv`.
 
-The program will process all the video files within a given folder. While the organization of the video files within this folder doesn't matter at all (e.g. video files can be spread across nested folders), **the video folder *must* contain another folder called `metadata`. This `metadata` folder *must* contain the `poi.csv` and `run.csv` files:**
+The program will process all the video files within a given folder. While the organization of the video files within this folder doesn't matter at all (e.g. video files can be spread across nested folders), **the videos folder *must* contain another folder called `metadata`. This `metadata` folder *must* contain the `poi.csv` and `run.csv` files:**
 
 ```
-videos
+videos_folder
 │   some_file
 │   some_video_file
 │   ...
@@ -87,19 +87,21 @@ Comments,
 ```
 Each row describes a metadatum. The first field (fields are separated by a comma) describes the name of that specific metadatum. The fields following that are the possible values said metadatum can have. For instance, in the example above, `Condition` can take only two values: `Transfered` or `Covered`. In case the metadatum can not be limited to a finite number of discrete values and can only be described in free-text, leave the following fields empty (as in the case of the `Specimen ID` and `Comments` in the example above).
 
-You can have as many or as few metadata as you like, keeping only the metadata and POIs that are relevant to your specific setups. This flexibility allows the user to keep different `poi.csv` and `run.csv` metadata files in each of their video-folders.
+You can have as many or as few metadata as you like, keeping only the metadata and POIs that are relevant to your specific setups. This flexibility allows the user to keep different `poi.csv` and `run.csv` metadata files in each of their videos folders.
 
 Note that apart from the requirement that a `metadata` folder contain the two `poi.csv` and `run.csv` files, **the values (i.e. fields) in these files must be delimited by a comma** (as shown in the example above). You can produce these two files using your favourite word editor (or excel), but make sure the file extension is `csv` and that the delimiter is a comma.
 
 An example of this file hierarchy, the metadata folder, and the two `csv` files is available [here](test/videofolder).
 
 ### Instructions
-Once you've prepared the `metadata` folder and the two `csv` files, start the program. After launching the program, in the initial window, navigate and choose the folder that contains all the videos that you want to log (choose the folder itself, not a file inside the folder). A new window will appear, where you can add new POIs and Runs. In the POI section the user can choose a specific POI to log, a video file and time stamp where the POI starts, a video file and time stamp where the POI ends, and a comment (choosing a video file starts running it automatically, pressing `Add` adds the specific POI to the registry). In the Run section the user can edit a run by setting the correct metadata and pressing `Add`. After adding some POIs and Runs, the window will be populated with rows of runs and columns of POIs. Use the checkboxes to indicate the associations between the Runs and POIs. 
+Once you've created the `metadata` folder and the two `csv` files in your videos folder (i.e. the folder that contains all the videos that you want to log), start the program (by double-clicking on the `BeetleLog.jl` file in your home directory). After launching the program, in the initial window, navigate and choose the videos folder (choose the folder itself, not a file inside the folder). A new window will appear, where you can add new POIs and Runs. In the POI section the user can choose a specific POI to log: a video file and time stamp where the POI starts, a video file and time stamp where the POI ends, and an optional comment (choosing a video file starts running it automatically, pressing `Add` adds the specific POI to the registry). In the Run section the user can edit a run by setting the correct metadata and pressing `Add`. After adding some POIs and Runs, the Associations section will be populated with rows of runs and columns of POIs. Use the checkboxes to indicate the associations between the Runs and POIs. 
 
-When done, press `Done`. While the program attempts to automatically extract the original filming date and time the video file was taped, it is *imperrative* that you make sure these are indeed correct. You will be presented with another window containing all the videos you logged and their dates and times. Adjust these accordingly (pressing the video filename starts playing the video). When finished press `Done`.
+When done, press `Done`. While the program attempts to automatically extract the original filming dates and times of the video files, it is *imperrative* that you make sure these are indeed correct. You will be presented with another window containing all the videos you logged and their dates and times. Adjust these accordingly (pressing the video filename starts playing the video). When finished press `Done`.
 
-You will now find a new folder, `log`, in the video folder with 4 files in it: 
-1. `files.csv`: all the file names, dates and times of when the file was recorded, and video duration in seconds (rounded up).
-2. `pois.csv`: all the POI names, the video file where this POI started, the start time (in seconds), the video file where this POI ended, the stop time (in seconds), and comments.
+You will now find a new folder, `log`, in the videos folder with 4 files in it: 
+1. `files.csv`: all the video file names, dates and times of when the video was recorded.
+2. `pois.csv`: all the POI names, the video file where this POI started, the start time (in seconds), the video file where this POI ended, the stop time (in seconds), and eventual comments.
 3. `runs.csv`: All the metadata and their values in the logged runs. The last field is the number of replicates for each of the runs (calculated automatically).
-4. `associations.csv`: A two column table where the first column is the POI number and the second column is the Run number (both relative to the row numbers in the `pois.csv` and `runs.csv` files). 
+4. `associations.csv`: A two column table where the first column is the POI number and the second column is the Run number (both relative to the row numbers in the `pois.csv` and `runs.csv` files, excluding the header row of course). 
+
+That's it! These 4 files contain *all* the necessary information for later processing of your videos. If the objects in your videos can be tracked automatically then no further manual involvement is necessary. If the nature of the videos and objects in them prohibits automatic tracking, manual tracking of the objects can now be conveniently semi-automated. 
