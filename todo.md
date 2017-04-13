@@ -1,5 +1,3 @@
-- Abrreviate the longer names
-- After pressing `Add` in the POI frame, set start time to former end time, and end time to former end time plus time difference
 - click all Runs for this POI, and click all POIs for this Run
 - Remove row/column from view
 - Delete row/column

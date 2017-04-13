@@ -165,6 +165,20 @@ function poirun(folder)
     end
     poisignal = filterwhen(goodtime, POI(), t)
 
+    foreach(poisignal) do p
+        if p.start.file == p.stop.file
+            dt = DateTime() + p.stop.time
+            push!(h1, Dates.Hour(dt).value)
+            push!(m1, Dates.Minute(dt).value)
+            push!(s1, Dates.Second(dt).value)
+
+            d = dt + p.stop.time - p.start.time
+
+            push!(h2, Dates.Hour(d).value)
+            push!(m2, Dates.Minute(d).value)
+            push!(s2, Dates.Second(d).value)
+        end
+    end
 
     # run
 
