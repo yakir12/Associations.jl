@@ -3,7 +3,7 @@ function shorten(s::String, k::Int)::String
     m > 2k + 1 || return s
     s[1:k]*"…"*s[(end-k + 1):end]
 end
-function shorten(vfs::Vector{String}, n = 30)
+function shorten(vfs::Vector{String}, n)
     nmax = max(n, maximum(length.(vfs)))
     while n <= nmax
         if allunique(shorten(vf, n) for vf in vfs)

@@ -104,7 +104,7 @@ function poirun(folder)
 
     # POI
 
-    files = shorten(getVideoFiles(folder))
+    files = shorten(getVideoFiles(folder), 30)
     points = strip.(vec(readcsv(joinpath(folder, "metadata", "poi.csv"), String)))
     # widgets
     shortfiles = collect(keys(files))
@@ -215,7 +215,7 @@ function poirun(folder)
             assg[x, 0] = l
         end
         for (y, r) in enumerate(a.runs)
-            assg[0, y] = Label(shorten(string(join(values(r.metadata), ":")..., ":", r.repetition), 10))
+            assg[0, y] = Label(shorten(string(join(values(r.metadata), ":")..., ":", r.repetition), 30))
         end
         for (x, t) in enumerate(a.pois), (y, r) in enumerate(a.runs)
             key = (x, y)
