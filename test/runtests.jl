@@ -70,8 +70,11 @@ end
     @test a.nruns == 2nruns
 
     empty!(a)
-    @test a.npois == 0
-    @test a.nruns == 0
+    #@test a.npois == 0
+    #@test a.nruns == 0
+
+    @test a == Associations.Association()# = Association(POI[], Run[], Set())
+
 end
 
 @testset "Load & save" begin

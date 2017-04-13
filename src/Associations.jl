@@ -88,6 +88,7 @@ end
 
 Association() = Association(POI[], Run[], Set())
 
+==(a::Association, b::Association) = a.npois == b.npois && a.nruns == b.nruns && a.associations == b.associations && a.pois == b.pois && a.runs == b.runs
 
 
 # pushes
