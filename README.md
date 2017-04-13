@@ -6,7 +6,6 @@
 [![codecov.io](http://codecov.io/github/yakir12/Associations.jl/coverage.svg?branch=master)](http://codecov.io/github/yakir12/Associations.jl?branch=master)
 
 ## How to install
-
 1. If you haven't already, install [Julia v0.6 (Nightly builds)](https://julialang.org/downloads/) -> you should be able to launch it (some icon on the Desktop or some such)
 2. Start Julia -> a Julia-terminal popped up
 3. Copy: `Pkg.clone("git://github.com/yakir12/Associations.jl.git") && Pkg.build("Associations")` and paste it in the newly opened Julia-terminal, press Enter
@@ -21,19 +20,24 @@ The user's interaction with this package is via GUI. You will find an executable
 Recording, processing, and analysing videos of (behavioral) experiments usually includes some kind of manual work. This manual component might only include renaming and organizing video files, but could also mean manually tracking objects. The purpose of this package is to standardize your data at the earliest possible stage so that any subsequent manual involvement would be as easy and robust as possible. This allows for streamlining the flow of your data from the original raw-format video-files to the results of your analysis.
 
 A typical workflow might look like this:
-```
-setup experiment -> run experiment & record videos -> rename videos -> organize files into categorical folders -> track objects in the videos -> collate tracking data into their experiemntal context -> process (camera) calibrations -> process the positions (normalizing directions, origin points, distances, relative sizes, relative landmarks, temporal events, etc.) -> run analysis on the positional data
-```
+1. setup experiment 
+2. run experiment & record videos 
+3. rename videos 
+4. organize files into categorical folders 
+5. track objects in the videos 
+6. collate tracking data into their experiemntal context 
+7. process (camera) calibrations 
+8. process the positions (normalizing directions, origin points, distances, relative sizes, relative landmarks, temporal events, etc.) 
+9. run analysis on the positional data
+
 The researcher is often required to manually perform some of these steps. While this manual envolvement is insignificant in small, one-person, projects, it could intoduce errors in larger projects. Indeed, in projects that involve multiple investigators, span across many years, and involve different experiments, manual organisation is simply not practical. 
 
 The objective of this package is to constrain and control the points where manual involvement is unavoidable. By taking care of the manual component of the process as early as possible, we:
-
-1) allow for greater flexability in subsequent stages of the analysis, 
-2) garauntee that the data is kept at its original form,
-3) pave the way for efficient automation of later stages in the analysis.
+1. allow for greater flexability in subsequent stages of the analysis, 
+2. garauntee that the data is kept at its original form,
+3. pave the way for efficient automation of later stages in the analysis.
 
 When logging videotaped experiments, it is useful to think of the whole process in terms of 4 different "entities":
-
 1. **Video files**: the individual video files. One may contain a part, a whole, or multiple experimental runs. 
 2. **POIs**: Points Of Interest (POI) you want to track in the video, tagging *when* in the video timeline they occur (the *where* in the video frame comes later). These could be: burrow, food, calibration sequence, trajectory track, barrier, landmark, etc.
 3. **Runs**: These are the experimental runs. They differ from each other in terms of the treatment, location, repetition number, species, individual specimen, etc.
