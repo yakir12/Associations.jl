@@ -20,15 +20,16 @@ The user's interaction with this package is via GUI. You will find an executable
 Recording, processing, and analysing videos of (behavioral) experiments usually includes some kind of manual work. This manual component might only include renaming and organizing video files, but could also mean manually tracking objects. The purpose of this package is to standardize your data at the earliest possible stage so that any subsequent manual involvement would be as easy and robust as possible. This allows for streamlining the flow of your data from the original raw-format video-files to the results of your analysis.
 
 A typical workflow might look like this:
-1. setup experiment 
-2. run experiment & record videos 
-3. rename videos 
-4. organize files into categorical folders 
-5. track objects in the videos 
-6. collate tracking data into their experiemntal context 
-7. process (camera) calibrations 
-8. process the positions (normalizing directions, origin points, distances, relative sizes, relative landmarks, temporal events, etc.) 
-9. run analysis on the positional data
+1. Setup experiment 
+2. Run experiment & record videos 
+3. Rename videos 
+4. Organize files into categorical folders 
+5. Track objects in the videos 
+6. Collate tracking data into their experiemntal context 
+7. Process (camera) calibrations 
+8. Process the positions (normalizing directions, origin points, relative landmarks, etc.) 
+9. Run analysis on the positional data
+10. Produce figures
 
 The researcher is often required to manually perform some of these steps. While this manual envolvement is insignificant in small, one-person, projects, it could intoduce errors in larger projects. Indeed, in projects that involve multiple investigators, span across many years, and involve different experiments, manual organisation is simply not practical. 
 
