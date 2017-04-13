@@ -19,14 +19,18 @@ function shorten(vfs::Vector{String}, nmin = 30)
     end
 end
 function openit(f::String)
-    if is_windows()
-        run(`start $f`)
-    elseif is_linux()
-        run(`xdg-open $f`)
-    elseif is_apple()
-        run(`open $f`)
+    if isfile(f)
+        if is_windows()
+            run(`start $f`)
+        elseif is_linux()
+            run(`xdg-open $f`)
+        elseif is_apple()
+            run(`open $f`)
+        else
+            error("Unknown OS")
+        end
     else
-        error("Couldn't open $f")
+        systemerror("$f not found", true)
     end
 end
 

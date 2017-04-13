@@ -104,13 +104,15 @@ end
 
 @testset "util" begin
 
-    @test all(length(Associations.shorten("a"^x, y)) == (x <= 2y + 1 ? x : 2y + 1) for x = 1:20, y = 1:20)
+    @test all(length(Associations.shorten("a"^x, y)) == (x <= 2y + 1 ? x : 2y + 1) for x = 0:8, y = 0:3)
 
-    n = 20
-    for x = 10:10:50
+    function testit(x, y)
         txt = ["a"^i for i = 1:x]
-        d = Associations.shorten(txt, n)
-        @test all(length(k) == min(length(v), 2n + 1) for (k,v) in d)
+        Associations.shorten(txt, y)
     end
+
+    @test all(all(length(k) == min(length(v), 2y + 1) for (k,v) in testit(x, y)) for x = 1:8, y = 1:3)
+
+    @test_throws ErrorException Associations.openit("thisfiledoesnotexist.666")
 
 end
