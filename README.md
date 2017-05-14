@@ -6,7 +6,7 @@
 [![codecov.io](http://codecov.io/github/yakir12/Associations.jl/coverage.svg?branch=master)](http://codecov.io/github/yakir12/Associations.jl?branch=master)
 
 ## How to install
-1. If you haven't already, install [Julia v0.6 (Nightly builds)](https://julialang.org/downloads/) -> you should be able to launch it (some icon on the Desktop or some such)
+1. If you haven't already, install [Julia v0.6 (Release Candidates)](https://julialang.org/downloads/) -> you should be able to launch it (some icon on the Desktop or some such)
 2. Start Julia -> a Julia-terminal popped up
 3. Copy: `Pkg.clone("git://github.com/yakir12/Associations.jl.git") && Pkg.build("Associations")` and paste it in the newly opened Julia-terminal, press Enter
 4. To test the package (not necessary), copy: `Pkg.test("Associations")` and paste it in the Julia-terminal, press enter
@@ -94,9 +94,16 @@ Note that apart from the requirement that a `metadata` folder contain the two `p
 An example of this file hierarchy, the metadata folder, and the two `csv` files is available [here](test/videofolder).
 
 ### Instructions
-Once you've created the `metadata` folder and the two `csv` files in your videos folder (i.e. the folder that contains all the videos that you want to log), start the program (by double-clicking on the `BeetleLog.jl` file in your home directory). After launching the program, in the initial window, navigate and choose the videos folder (choose the folder itself, not a file inside the folder). A new window will appear, where you can add new POIs and Runs. In the POI section the user can choose a specific POI to log: a video file and time stamp where the POI starts, a video file and time stamp where the POI ends, and an optional comment (choosing a video file starts running it automatically, pressing `Add` adds the specific POI to the registry). In the Run section the user can edit a run by setting the correct metadata and pressing `Add`. After adding some POIs and Runs, the Associations section will be populated with rows of runs and columns of POIs. Use the checkboxes to indicate the associations between the Runs and POIs. 
+Once you've created the `metadata` folder and the two `csv` files in your videos folder (i.e. the folder that contains all the videos that you want to log), start the program (by double-clicking on the `BeetleLog.jl` file in your home directory). After launching the program, in the initial window, navigate and choose the videos folder (choose the folder itself, not a file inside the folder). A new window will appear, where you can add new POIs, Runs, and assign their appropriate associations. In the POI section the user can choose a specific POI to log: a video file and time stamp where the POI starts, a video file and time stamp where the POI ends, an optional label to tag the POI with (recommended), and an optional comment (choosing a video file starts running it automatically, pressing `Add` adds the specific POI to the registry, the `Add` button will not let you add a POI with a start time that is later than a stop time if the start and stop files are the same file). In the Run section the user can edit a run by setting the correct metadata and pressing `Add`. After adding some POIs and Runs, the Associations section will be populated with rows of runs and columns of POIs. Use the checkboxes to indicate the associations between the Runs and POIs. 
 
-When done, press `Done`. While the program attempts to automatically extract the original filming dates and times of the video files, it is *imperrative* that you make sure these are indeed correct. You will be presented with another window containing all the videos you logged and their dates and times. Adjust these accordingly (pressing the video filename starts playing the video). When finished press `Done`.
+By clicking on a Run or POI, you can choose to: 
+1. `Check`: check all the associations for all the Runs/POIs for that specific POI/Run (like checking a row/column) 
+2. `Uncheck`: uncheck all the associations for all the Runs/POIs for that specific POI/Run (like checking a row/column) 
+3. `Hide`: hide a whole row/column out of sight. Use this to free-up some space if you are certain that you finished logging said Run/POI.
+4. `Edit`: the POI/Run console will get populated with the details of the POI/Run you want to edit, change the details you like and press `Add`. The edited POI/Run will update and be displayed at the end of the association pane (as if it was a newly added one).
+5. `Delete`: permanently deletes a specific POI/Run.
+
+When done, press `Done`. The program will attempt to automatically extract the original filming dates and times of the video files. It is however *imperrative* that you make sure these estimates are indeed correct. You will therefore be presented with another window containing all the videos you logged and their estimated dates and times. Adjust these accordingly (pressing the video filename starts playing the video). When finished press `Done`.
 
 You will now find a new folder, `log`, in the videos folder with 4 files in it: 
 1. `files.csv`: all the video file names, dates and times of when the video was recorded.

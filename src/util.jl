@@ -27,4 +27,8 @@ function openit(f::String)
         systemerror("$f not found", true)
     end
 end
-
+function findshortfile(fullname)
+    for k in keys(files)
+        files[k] == fullname && return k
+    end
+end

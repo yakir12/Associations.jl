@@ -1,5 +1,6 @@
-- click all Runs for this POI, and click all POIs for this Run
-- Remove row/column from view
-- Delete row/column
-- Add a `Label` to the POIs
+x [c] Check (v) all Runs for this POI (and POIs for Run)
+x [h] Hide row/column from view
+x [e] Edit POI/Run
+x [d] Delete row/column
+x Add a `Label` to the POIs
 - Functionality: people will want to add/remove/edit video files, POIs, and Runs *after* a saved session

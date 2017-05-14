@@ -3,7 +3,7 @@ module Associations
 
 using Gtk.ShortNames, GtkReactive
 
-import Base: push!, ==, empty!
+import Base: push!, ==, empty!, deleteat!
 
 #export VideoFile, Point, POI, Run, Association, getVideoFiles, push!, save, shorten, openit, ==, empty!, loadAssociation, loadVideoFiles
 export poirun, checkvideos
@@ -58,24 +58,31 @@ Point(f::String, h::Int, m::Int, s::Int) = Point(f, sum(Dates.Second.([Dates.Hou
 
 ==(a::Point, b::Point) = a.file == b.file && a.time == b.time
 
-immutable POI
+type POI
     name::String
     start::Point
     stop::Point
+    label::String
     comment::String
+    visible::Bool
 end
 
 function POI()
     p = Point("", Dates.Second(0))
-    return POI("", p, p, "")
+    return POI("", p, p, "", "", true)
 end
 
-==(a::POI, b::POI) = a.name == b.name && a.comment == b.comment && a.start == b.start && a.stop == b.stop
+POI(name, start, stop, label, comment) = POI(name, start, stop, label, comment, true)
 
-immutable Run
+==(a::POI, b::POI) = a.name == b.name && a.comment == b.comment && a.start == b.start && a.stop == b.stop && a.label == b.label
+
+type Run
     metadata::Dict{Symbol, String}
     repetition::Int
+    visible::Bool
 end
+
+Run() = Run(Dict(:nothing => "nothing"), 0, true)
 
 type Association
     pois::Vector{POI}
@@ -108,7 +115,7 @@ function push!(xs::Vector{Run}, metadata::Dict{Symbol, String})
         same || continue
         repetition = max(repetition, x.repetition)
     end
-    r = Run(metadata, repetition + 1)
+    r = Run(metadata, repetition + 1, true)
     push!(xs, r)
 end
 
@@ -126,6 +133,37 @@ function push!(a::Association, metadata::Dict{Symbol, String})
     return a
 end
 
+# deletes
+
+function deleteat!(a::Association, r::POI)
+    i = findfirst(x -> x == r, a.pois)
+    deleteat!(a.pois, i)
+    a.npois -= 1
+    filter!(x -> i != first(x), a.associations)
+    return a
+end
+
+function deleteat!(rs::Vector{Run}, r::Run)
+    metadata = r.metadata
+    repetition = r.repetition
+    filter!(x -> x != r, rs)
+    for x in rs
+        # when counting the number of repetitions, ignore any discrepancy between the comments
+        if x.repetition > repetition && all(r"comment"i(string(k)) ? true : metadata[k] == x.metadata[k] for k in keys(metadata))
+            x.repetition -= 1
+        end
+    end
+    return rs
+end
+
+function deleteat!(a::Association, r::Run)
+    i = findfirst(x -> x == r, a.runs)
+    deleteat!(a.runs, i)
+    a.nruns -= 1
+    filter!(x -> i != last(x), a.associations)
+    return a
+end
+
 # saves
 
 function save(folder::String, x::Vector{VideoFile})
@@ -140,10 +178,10 @@ end
 
 function save(folder::String, x::Vector{POI}) 
     n = length(x)
-    a = Matrix{Any}(n + 1,6)
-    a[1,:] .= ["name", "start file", "start time (seconds)", "stop file", "stop time (seconds)", "comments"]
+    a = Matrix{Any}(n + 1,7)
+    a[1,:] .= ["name", "start file", "start time (seconds)", "stop file", "stop time (seconds)", "label", "comments"]
     for (i, t) in enumerate(x)
-        a[i + 1, :] .= [t.name, t.start.file, t.start.time.value, t.stop.file, t.stop.time.value, t.comment]
+        a[i + 1, :] .= [t.name, t.start.file, t.start.time.value, t.stop.file, t.stop.time.value, t.label, t.comment]
     end
     writecsv(joinpath(folder, "pois.csv"), a, quotes = true)
 end
@@ -207,7 +245,7 @@ function loadPOIs(folder::String)::Vector{POI}
         a .= strip.(a)
         nrow, ncol = size(a)
         for i = 1:nrow
-            push!(tgs, POI(a[i, 1], Point(a[i, 2], Dates.Second(parse(Int, a[i, 3]))), Point(a[i, 4], Dates.Second(parse(Int, a[i, 5]))), a[i, 6]))
+            push!(tgs, POI(a[i, 1], Point(a[i, 2], Dates.Second(parse(Int, a[i, 3]))), Point(a[i, 4], Dates.Second(parse(Int, a[i, 5]))), a[i, 6], a[i, 7]))
         end
     end
     return tgs
@@ -227,7 +265,7 @@ function loadRuns(folder::String)::Vector{Run}
                 metadata[ks[j]] = a[i, j]
             end
             repetition = parse(Int, a[i, ncol])
-            push!(rs, Run(metadata, repetition))
+            push!(rs, Run(metadata, repetition, true))
         end
     end
     return rs

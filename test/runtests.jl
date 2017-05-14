@@ -31,7 +31,7 @@ videofiles = Associations.getVideoFiles(videofolder)
 end
 
 @testset "POI" begin
-    @test Associations.POI() == Associations.POI("", Associations.Point("", 0, 0, 0), Associations.Point("", 0, 0, 0), "")
+    @test Associations.POI() == Associations.POI("", Associations.Point("", 0, 0, 0), Associations.Point("", 0, 0, 0), "", "", true)
 end
 
 @testset "Run" begin
