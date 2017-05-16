@@ -40,7 +40,7 @@ function getVideoFiles(folder::String)
     new = String[]
     for (root, dir, files) in walkdir(folder)
         for file in files
-            #file[1] == '.' && continue
+            file[1] == '.' && continue
             last(splitext(file)) in exts || continue
             fname = relpath(joinpath(root, file), folder)
             push!(new, fname)
