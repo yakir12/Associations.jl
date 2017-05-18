@@ -35,6 +35,8 @@ end
 end
 
 @testset "Run" begin
+    @test Associations.Run() == Associations.Run(Dict(:nothing => "nothing"), 0, true)
+
     da1 = Dict(:comment => getstring(), :name => "a")
     da2 = Dict(:comment => getstring(), :name => "a")
     db = Dict(:comment => getstring(), :name => "b")
@@ -47,6 +49,9 @@ end
         n = reduce((y,x) -> max(x.metadata[:name] == name ? x.repetition : 0, y), 0, rs)
         @test n == rep
     end
+
+    deleteat!(rs, Associations.Run(da1, 1, true))
+    @test length(rs) == 4
 end
 
 @testset "Association" begin

@@ -84,6 +84,8 @@ end
 
 Run() = Run(Dict(:nothing => "nothing"), 0, true)
 
+==(a::Run, b::Run) = a.metadata == b.metadata && a.repetition == b.repetition
+
 type Association
     pois::Vector{POI}
     npois::Int

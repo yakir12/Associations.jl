@@ -7,22 +7,14 @@ function shorten(vfs::Vector{String}, m)
         if allunique(shorten(vf, n) for vf in vfs)
             break
         end
-        #println(n)
     end
     return Dict(shorten(vf, n) => vf for vf in vfs)
 end
 
 function openit(f::String)
     if isfile(f)
-        if is_windows()
-            run(`start $f`)
-        elseif is_linux()
-            run(`xdg-open $f`)
-        elseif is_apple()
-            run(`open $f`)
-        else
-            error("Unknown OS")
-        end
+        cmd = is_windows() ? `start $f` : is_linux() ? `xdg-open $f` : is_apple() ? `open $f` : error("Unknown OS")
+        run(cmd)
     else
         systemerror("$f not found", true)
     end
