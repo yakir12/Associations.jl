@@ -27,8 +27,9 @@ function openit(f::String)
         systemerror("$f not found", true)
     end
 end
-function findshortfile(fullname)
-    for k in keys(files)
-        files[k] == fullname && return k
+function findshortfile(v::String, d::Dict{String, String})::String
+    for k in keys(d)
+        d[k] == v && return k
     end
+    error("Couldn't find $v in $d")
 end

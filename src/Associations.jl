@@ -178,27 +178,29 @@ end
 
 function save(folder::String, x::Vector{POI}) 
     n = length(x)
-    a = Matrix{Any}(n + 1,7)
+    a = Matrix{String}(n + 1,7)
     a[1,:] .= ["name", "start file", "start time (seconds)", "stop file", "stop time (seconds)", "label", "comments"]
     for (i, t) in enumerate(x)
-        a[i + 1, :] .= [t.name, t.start.file, t.start.time.value, t.stop.file, t.stop.time.value, t.label, t.comment]
+        a[i + 1, :] .= [t.name, t.start.file, string(t.start.time.value), t.stop.file, string(t.stop.time.value), t.label, t.comment]
     end
+    a .= strip.(a)
     writecsv(joinpath(folder, "pois.csv"), a, quotes = true)
 end
 
 function save(folder::String, x::Vector{Run})
-    ks = collect(keys(x[1].metadata))
+    ks = sort(collect(keys(x[1].metadata)))
     header = string.(ks)
     push!(header, "repetition")
     n = length(x)
-    a = Matrix{Any}(n + 1, length(ks) + 1)
+    a = Matrix{String}(n + 1, length(ks) + 1)
     a[1,:] .= header
     for (i, r) in enumerate(x)
         for (j, k) in enumerate(ks)
             a[i + 1, j] = r.metadata[k]
         end
-        a[i + 1, end] = r.repetition
+        a[i + 1, end] = string(r.repetition)
     end
+    a .= strip.(a)
     writecsv(joinpath(folder, "runs.csv"), a, quotes = true)
 end
 

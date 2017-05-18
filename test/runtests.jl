@@ -52,9 +52,14 @@ end
 @testset "Association" begin
     npois = 3
     nruns = 4
-    p = fill(Associations.POI(), npois)
+    p = Array(Associations.POI, npois)
+    for i = 1:npois
+        pp = Associations.POI()
+        pp.name = string(i)
+        p[i] = pp
+    end
     r = Associations.Run[]
-    dicts = [Dict(:comment => getstring(), :name => getstring(3)) for i = 1:nruns]
+    dicts = [Dict(:comment => getstring(i), :name => getstring(3)) for i = 1:nruns]
     for d in dicts
         push!(r, d)
     end
@@ -63,17 +68,31 @@ end
     @test a.npois == npois
     @test a.nruns == nruns
 
+    for i = 1:npois
+        p[i].label = string(i)
+    end
     push!(a, p...)
 
-    push!(a, dicts...)
     @test a.npois == 2npois
+
+    for i = 1:nruns
+        dicts[i][:name] = getstring(10)
+    end
+    push!(a, dicts...)
+
     @test a.nruns == 2nruns
 
-    empty!(a)
-    #@test a.npois == 0
-    #@test a.nruns == 0
+    deleteat!(a, p[1])
 
-    @test a == Associations.Association()# = Association(POI[], Run[], Set())
+    @test a.npois == 2npois - 1
+
+    deleteat!(a, r[1])
+
+    @test a.nruns == 2nruns - 1
+
+    empty!(a)
+
+    @test a == Associations.Association()
 
 end
 
@@ -81,7 +100,7 @@ end
     @testset "VideoFiles" begin
         vfs = Associations.loadVideoFiles(videofolder)
 
-        va = Associations.VideoFile("a.mp4",[DateTime("1977-06-01T00:00:00")])
+        va = Associations.VideoFile("a.mp4",[DateTime("2017-02-28T16:04:47")])
         vb = Associations.VideoFile("b.mp4",[DateTime("2017-03-02T15:38:25")])
         @test first(filter(x -> x.file == "a.mp4", vfs)) == va
         @test first(filter(x -> x.file == "b.mp4", vfs)) == vb
@@ -90,7 +109,7 @@ end
     @testset "Association" begin
 
         x = Associations.loadAssociation(videofolder)
-        testlog = "testlog"
+        testlog = joinpath(tempdir(), "testlog")
         isdir(testlog) && rm(testlog, recursive = true)
         mkdir(testlog)
         Associations.save(testlog, x)
@@ -99,7 +118,7 @@ end
         Associations.save(testlog, vfs)
 
         for f in readdir(joinpath(testlog, "log"))
-            #@test readstring(joinpath(testlog, "log", f)) == readstring(joinpath(videofolder, "log", f)) 
+            @test readstring(joinpath(testlog, "log", f)) == readstring(joinpath(videofolder, "log", f)) 
         end
         isdir(testlog) && rm(testlog, recursive = true)
     end
@@ -123,5 +142,9 @@ end
     @test all(all(length(k) == min(length(v), 2y + 1) for (k,v) in testitdifferent(x, y)) for x = 1:9, y = 1:3)
 
     @test_throws SystemError Associations.openit("thisfiledoesnotexist.666")
+
+    d = Dict(string(x) => string(x) for x in 'a':'z')
+    @test Associations.findshortfile("b", d) == "b"
+    @test_throws ErrorException Associations.findshortfile("bad", d) == "b"
 
 end

@@ -195,18 +195,18 @@ function poirun(folder)
         end
         return nothing
     end=#
-    #=foreach(poisignal) do p
+    foreach(poisignal) do p
         if p.start.file == p.stop.file
             dt = DateTime() + p.stop.time
-            push!(h1, Dates.Hour(dt).value)
-            push!(m1, Dates.Minute(dt).value)
-            push!(s1, Dates.Second(dt).value)
+            signal(h1).value = Dates.Hour(dt).value
+            signal(m1).value = Dates.Minute(dt).value
+            signal(s1).value = Dates.Second(dt).value
             d = dt + p.stop.time - p.start.time
-            push!(h2, Dates.Hour(d).value)
-            push!(m2, Dates.Minute(d).value)
-            push!(s2, Dates.Second(d).value)
+            signal(h2).value = Dates.Hour(d).value
+            signal(m2).value = Dates.Minute(d).value
+            signal(s2).value = Dates.Second(d).value
         end
-    end=#
+    end
 
     #=poiadd = button("a")
     poig = Grid()
@@ -280,8 +280,8 @@ function poirun(folder)
                 edit_ = MenuItem("Edit")
                 edith = signal_connect(edit_, :activate) do _
                     push!(poi, p.name)
-                    push!(fstart, findshortfile(p.start.file))
-                    push!(fstop, findshortfile(p.stop.file))
+                    push!(fstart, findshortfile(p.start.file, files))
+                    push!(fstop, findshortfile(p.stop.file, files))
                     dt1 = DateTime() + p.start.time
                     push!(s1, Dates.Second(dt1).value)
                     push!(m1, Dates.Minute(dt1).value)

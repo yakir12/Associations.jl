@@ -1,8 +1,3 @@
-Field station,Specimen ID,Condition,Plot,Location,Comments,Experiment,Species,repetition
-Vryburg Stonehenge,,Covered,Poolarea,South Africa,,Wind compass,Scarabaeus lamarcki,1
-BelaBela Thornwood,,Covered,Poolarea,South Africa,,Orientation precision,Scarabaeus lamarcki,1
-Vryburg Stonehenge,hgjg,Transfered,Volleyball court,Spain,jgjhgj,Wind compass,Scarabaeus galenus,1
-Vryburg Stonehenge,,Transfered,Darkroom,South Africa,,Wind compass,Scarabaeus lamarcki,1
-Vryburg Stonehenge,,Transfered,Darkroom,South Africa,,Wind compass,Scarabaeus lamarcki,2
-Vryburg Stonehenge,,Transfered,Darkroom,South Africa,,Wind compass,Scarabaeus lamarcki,3
-Vryburg Stonehenge,,Transfered,Darkroom,South Africa,,Wind compass,Scarabaeus lamarcki,4
+Comments,Condition,Experiment,Field station,Location,Plot,Species,Specimen ID,repetition
+dfsd fsd fs fsd,Transfered,Wind compass,Vryburg Stonehenge,South Africa,Darkroom,Scarabaeus lamarcki,zdcz,1
+ds fsd  fsd fsd,Transfered,Wind compass,Lund Skyroom,South Africa,Darkroom,Scarabaeus lamarcki,eee,1
