@@ -264,7 +264,7 @@ function poirun(folder)
         empty!(gass)
         for (x, p) in enumerate(aa.pois)
             if p.visible
-                file = MenuItem("_$(p.label) $x")
+                file = MenuItem("_$(p.name) $(p.label)")
                 filemenu = Menu(file)
                 check_ = MenuItem("Check")
                 checkh = signal_connect(check_, :activate) do _
