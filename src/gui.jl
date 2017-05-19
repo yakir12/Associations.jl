@@ -260,7 +260,7 @@ function poirun(folder)
     bind!(metadatasignal, metadatasignal2)
 
 
-    foreach(a) do aa
+    assdone = map(a) do aa
         empty!(gass)
         for (x, p) in enumerate(aa.pois)
             if p.visible
@@ -375,6 +375,20 @@ function poirun(folder)
             end
         end
         showall(win)
+    end
+
+    foreach(assdone) do _
+        p = value(poisignal)
+        if p.start.file == p.stop.file
+            dt = DateTime() + p.stop.time
+            push!(h1, Dates.Hour(dt).value)
+            push!(m1, Dates.Minute(dt).value)
+            push!(s1, Dates.Second(dt).value)
+            d = dt + p.stop.time - p.start.time
+            push!(h2, Dates.Hour(d).value)
+            push!(m2, Dates.Minute(d).value)
+            push!(s2, Dates.Second(d).value)
+        end
     end
 
 
