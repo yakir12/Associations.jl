@@ -5,8 +5,7 @@ using Gtk.ShortNames, GtkReactive
 
 import Base: push!, ==, empty!, deleteat!
 
-#export VideoFile, Point, POI, Run, Association, getVideoFiles, push!, save, shorten, openit, ==, empty!, loadAssociation, loadVideoFiles
-export poirun, checkvideos
+export VideoFile, Point, POI, Run, Association, getVideoFiles, push!, save, shorten, openit, ==, empty!, loadAssociation, loadVideoFiles, poirun, checkvideos
 
 exiftool = joinpath(Pkg.dir("Associations"), "deps", "src", "exiftool", "exiftool")
 if is_windows()

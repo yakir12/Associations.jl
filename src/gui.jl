@@ -100,7 +100,12 @@ end
 
 function poirun(folder)
 
+    poisignal = Signal(POI())
+    metadatasignal = Signal(Dict{Symbol, String}())
+    added = merge(poisignal, metadatasignal)
+    a = foldp(push!, loadAssociation(folder), added)
 
+    c = Condition()
     win = Window("LogBeetle")
     gass = Grid()
     g = Grid()
@@ -175,11 +180,19 @@ function poirun(folder)
 
 
     goodtime = map(p -> 
-                   #!haskey(poiindex, p) && 
-                   (p.start.file == p.stop.file ? p.start.time <= p.stop.time : true), tt)
+                   p.start.file == p.stop.file ? p.start.time <= p.stop.time : true, tt)
 
+    newpoi = map(a, tt) do aa, pp
+        !(pp in aa.pois)
+    end
 
-    poisignal = filterwhen(goodtime, POI(), t)
+    good = map(goodtime, newpoi) do tf1, tf2
+        tf1 && tf2
+    end
+
+    poisignal2 = filterwhen(good, POI(), t)
+
+    bind!(poisignal, poisignal2, initial=false)
 
 
     #=t1, t2 = async_map(nothing, poisignal) do p
@@ -195,7 +208,7 @@ function poirun(folder)
         end
         return nothing
     end=#
-    foreach(poisignal) do p
+    #=foreach(poisignal) do p
         if p.start.file == p.stop.file
             dt = DateTime() + p.stop.time
             signal(h1).value = Dates.Hour(dt).value
@@ -206,7 +219,7 @@ function poirun(folder)
             signal(m2).value = Dates.Minute(d).value
             signal(s2).value = Dates.Second(d).value
         end
-    end
+    end=#
 
     #=poiadd = button("a")
     poig = Grid()
@@ -215,10 +228,10 @@ function poirun(folder)
     # run
 
     # data
-    a = readcsv(joinpath(folder, "metadata", "run.csv"))
+    tmp = readcsv(joinpath(folder, "metadata", "run.csv"))
     metadata = Dict{String, Vector{String}}()
-    for i = 1:size(a,1)
-        b = strip.(a[i,:])
+    for i = 1:size(tmp,1)
+        b = strip.(tmp[i,:])
         metadata[b[1]] = filter(x -> !isempty(x), b[2:end])
     end
     nmd = length(metadata)
@@ -240,14 +253,12 @@ function poirun(folder)
     end
     rung[0:1, nmd + 1] = widget(runadd)
     # function
-    metadatasignal = map(runadd, init = Dict(k => value(v) for (k, v) in widgets)) do _
+    metadatasignal2 = map(runadd, init = Dict(k => value(v) for (k, v) in widgets)) do _
         Dict(k => value(v) for (k, v) in widgets)
     end
 
-    added = merge(poisignal, metadatasignal)
-    a = map(added, init = loadAssociation(folder)) do x
-        push!(value(a), x)
-    end
+    bind!(metadatasignal, metadatasignal2)
+
 
     foreach(a) do aa
         empty!(gass)
@@ -376,6 +387,7 @@ function poirun(folder)
     quits = Button("Quit")
     quith = signal_connect(quits, :clicked) do _
         destroy(win)
+        exit()
     end
 
 
@@ -389,7 +401,6 @@ function poirun(folder)
     showall(win)
 
 
-    c = Condition()
     signal_connect(win, :destroy) do widget
         notify(c)
     end
