@@ -13,7 +13,6 @@ videofolder = "videofolder"
 videofiles = Associations.getVideoFiles(videofolder)
 
 
-# test the 
 @testset "exiftool" begin 
     for file in videofiles
         f = joinpath(videofolder, file)
@@ -147,6 +146,8 @@ end
     @test all(all(length(k) == min(length(v), 2y + 1) for (k,v) in testitdifferent(x, y)) for x = 1:9, y = 1:3)
 
     @test_throws SystemError Associations.openit("thisfiledoesnotexist.666")
+
+    @test Associations.openit(joinpath(videofolder, "a.mp4"))
 
     d = Dict(string(x) => string(x) for x in 'a':'z')
     @test Associations.findshortfile("b", d) == "b"

@@ -14,7 +14,8 @@ end
 function openit(f::String)
     if isfile(f)
         cmd = is_windows() ? `start $f` : is_linux() ? `xdg-open $f` : is_apple() ? `open $f` : error("Unknown OS")
-        run(cmd)
+        return spawn(cmd)
+        # try to see if you can kill the spawned process (closing the movie player). this will be useful for testing this, and for managing shit once the user is done (not sure if all the players automatically close when the user quits julia)
     else
         systemerror("$f not found", true)
     end
