@@ -5,7 +5,7 @@ using Gtk.ShortNames, GtkReactive, DataStructures, AutoHashEquals
 
 import Base: push!, empty!, delete!, isempty#, hash, ==
 
-#export main, push!, empty!, delete!#, hash, ==
+export main
 #export VideoFile, Point, POI, Run, Association, getVideoFiles, push!, save, shorten, openit, ==, empty!, loadAssociation, loadVideoFiles, poirun, checkvideos
 
 exiftool = joinpath(Pkg.dir("Associations"), "deps", "src", "exiftool", "exiftool")
