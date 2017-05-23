@@ -43,5 +43,5 @@ if is_windows()
     mv(joinpath(basedir, "src", target), joinpath("src", "exiftool", binary_name), remove_destination = true)
 end
 
-cp(joinpath(Pkg.dir("Associations"), "src", "main.jl"), joinpath(homedir(), "BeetleLog.jl"), remove_destination = true)
+cp(joinpath(Pkg.dir("Associations"), "src", "BeetleLog.jl"), joinpath(homedir(), "BeetleLog.jl"), remove_destination = true)
 chmod(joinpath(homedir(), "BeetleLog.jl"), 0o775)
