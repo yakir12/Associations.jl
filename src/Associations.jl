@@ -5,7 +5,7 @@ using Gtk.ShortNames, GtkReactive, DataStructures, AutoHashEquals
 
 import Base: push!, empty!, delete!, isempty#, hash, ==
 
-export main, push!, empty!, delete!#, hash, ==
+#export main, push!, empty!, delete!#, hash, ==
 #export VideoFile, Point, POI, Run, Association, getVideoFiles, push!, save, shorten, openit, ==, empty!, loadAssociation, loadVideoFiles, poirun, checkvideos
 
 exiftool = joinpath(Pkg.dir("Associations"), "deps", "src", "exiftool", "exiftool")
@@ -19,9 +19,6 @@ const exts = [".webm", ".mkv", ".flv", ".flv", ".vob", ".ogv", ".ogg", ".drc", "
     file::String
     datetime::DateTime
 end
-
-# ==(a::VideoFile, b::VideoFile) = a.file == b.file && a.datetime == b.datetime
-
 
 function VideoFile(folder::String, file::String)
     fullfile = joinpath(folder, file)
@@ -57,9 +54,6 @@ end
 
 Point(f::String, h::Int, m::Int, s::Int) = Point(f, sum(Dates.Second.([Dates.Hour(h), Dates.Minute(m), Dates.Second(s)])))
 
-# ==(a::Point, b::Point) = a.file == b.file && a.time == b.time
-#hash(a::Point, h::UInt) = hash(a.file, hash(a.time, h))
-
 @auto_hash_equals immutable POI
     name::String
     start::Point
@@ -73,10 +67,6 @@ POI(name, start, stop, label, comment) = POI(name, start, stop, label, comment, 
 
 POI(;name = "", start = Point("", Dates.Second(0)), stop = Point("", Dates.Second(0)), label = "", comment = "") = POI(name, start, stop, label, comment)
 
-
-# ==(a::POI, b::POI) = a.name == b.name && a.comment == b.comment && a.start == b.start && a.stop == b.stop && a.label == b.label
-#hash(a::POI, h::UInt) = hash(a.name, hash(a.start, hash(a.stop, hash(a.label, hash(a.comment, h)))))
-
 @auto_hash_equals immutable Run
     metadata::Dict{Symbol, String}
     repetition::Int
@@ -86,9 +76,6 @@ end
 Run(metadata, repetition) = Run(metadata, repetition, true)
 Run(;metadata = Dict(:nothing => "nothing"), repetition = 0) = Run(metadata, repetition)
 
-# ==(a::Run, b::Run) = a.metadata == b.metadata && a.repetition == b.repetition
-#hash(a::Run, h::UInt) = hash(a.metadata, hash(a.repetition, h))
-
 @auto_hash_equals immutable Association
     pois::OrderedSet{POI}
     runs::OrderedSet{Run}
@@ -96,20 +83,6 @@ Run(;metadata = Dict(:nothing => "nothing"), repetition = 0) = Run(metadata, rep
 end
 
 Association() = Association(OrderedSet{POI}(), OrderedSet{Run}(), OrderedSet{Tuple{POI, Run}}())
-
-# ==(a::Association, b::Association) = a.associations == b.associations && a.pois == b.pois && a.runs == b.runs
-#=function hash(a::Association, h::UInt)
-    for p in a.pois
-        h = hash(p, h)
-    end
-    for r in a.runs
-        h = hash(r, h)
-    end
-    for a in a.associations
-        h = hash(first(a), hash(last(a), h))
-    end
-    return h
-end=#
 
 # pushes
 
