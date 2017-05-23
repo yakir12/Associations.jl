@@ -8,11 +8,11 @@
 ## How to install
 1. If you haven't already, install [Julia v0.6 (Release Candidates)](https://julialang.org/downloads/) -> you should be able to launch it (some icon on the Desktop or some such)
 2. Start Julia -> a Julia-terminal popped up
-3. Copy: `Pkg.clone("git://github.com/yakir12/Associations.jl.git"); Pkg.build("Associations")` and paste it in the newly opened Julia-terminal, press Enter
+3. Copy: `Pkg.clone("git://github.com/yakir12/Associations.jl.git"); Pkg.build("Associations"); Pkg.checkout("Reactive")` and paste it in the newly opened Julia-terminal, press Enter
 4. To test the package (not necessary), copy: `Pkg.test("Associations")` and paste it in the Julia-terminal, press enter
 5. You can close the Julia-terminal after it's done running
 
-The user's interaction with this package is via GUI. You will find an executable file called `BeetleLog.jl` in your home directory. Double-click it to start the program.
+The user's interaction with this package is via GUI. You will find an executable file called `BeetleLog.jl` in your home directory. Double-click it to start the program. **Note the [Troubleshooting](#troubleshooting) section for problems with this feature.**
 
 ## How to use
 
