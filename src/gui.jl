@@ -21,7 +21,7 @@ function checkvideos(folder)
         found || push!(ft, VideoFile(folder, k))
     end
 
-    done = Button("Done")
+    done = button("Done")
     g = Grid()
     g[0,0] = Label("File")
     g[1,0] = Label("Year")
@@ -30,10 +30,11 @@ function checkvideos(folder)
     g[4,0] = Label("Hour")
     g[5,0] = Label("Minute")
     g[6,0] = Label("Second")
-    const baddate = DateTime()
+    ft2 = similar(ft)
+    goodtimes = fill(Signal(true), length(ft))
     for (i, vf) in enumerate(ft)
         name = vf.file
-        datetime = vf.datetime[1]
+        datetime = vf.datetime
         play = button(name)
         y = spinbutton(1:10000, value = Dates.Year(datetime).value)
         m = spinbutton(1:12, value = Dates.Month(datetime).value)
@@ -47,19 +48,6 @@ function checkvideos(folder)
         setproperty!(H.widget, :width_request, 5)
         setproperty!(M.widget, :width_request, 5)
         setproperty!(S.widget, :width_request, 5)
-        dt = map(signal(y), signal(m), signal(d), signal(H), signal(M), signal(S)) do y², m², d², H², M², S²
-            try
-                DateTime(y², m², d², H², M², S²)
-            catch
-                baddate
-            end
-        end
-        gd = map(dt) do t²
-            setproperty!(done, :sensitive, t² != baddate)
-        end
-        tasksplay, resultsplay = async_map(nothing, signal(play)) do _
-            openit(joinpath(folder, name))
-        end
         g[0,i] = play.widget
         g[1,i] = y.widget
         g[2,i] = m.widget
@@ -67,26 +55,28 @@ function checkvideos(folder)
         g[4,i] = H.widget
         g[5,i] = M.widget
         g[6,i] = S.widget
-        vfh = map(dt) do dt²
-            vf.datetime[1] = dt²
+        dt = map(tuple, y, m, d, H, M, S)
+        time_is_good = map(x -> isnull(Dates.validargs(DateTime, x..., 0)), dt) 
+        goodtimes[i] = time_is_good
+        goodtime = filterwhen(time_is_good, value(dt), dt)
+        vf2 = map(goodtime) do x
+            ft2[i] = VideoFile(vf.file, DateTime(x...))
+        end
+        tasksplay, resultsplay = async_map(nothing, signal(play)) do _
+            openit(joinpath(folder, name))
         end
     end
-    doneh = signal_connect(done, :clicked) do _
-        save(folder, ft)
+
+    goodtime = map(&, goodtimes...)
+    clicked = filterwhen(goodtime, Void(), signal(done))
+    foreach(clicked,  init = nothing) do _
+        save(folder, ft2)
         destroy(win)
     end
-    g[0:6, length(ft) + 1] = done
+
+    g[0:6, length(ft) + 1] = widget(done)
     win = Window(g, "LogBeetle: Check videos", 1, 1)
     showall(win)
-
-
-
-
-    #=h = map(done, init = nothing) do _
-        save(folder, ft)
-        destroy(win)
-        nothing
-    end=#
 
     c = Condition()
     signal_connect(win, :destroy) do _
@@ -194,39 +184,6 @@ function poirun(folder)
 
     bind!(poisignal, poisignal2, initial=false)
 
-
-    #=t1, t2 = async_map(nothing, poisignal) do p
-        if p.start.file == p.stop.file
-            dt = DateTime() + p.stop.time
-            push!(h1, Dates.Hour(dt).value)
-            push!(m1, Dates.Minute(dt).value)
-            push!(s1, Dates.Second(dt).value)
-            d = dt + p.stop.time - p.start.time
-            push!(h2, Dates.Hour(d).value)
-            push!(m2, Dates.Minute(d).value)
-            push!(s2, Dates.Second(d).value)
-        end
-        return nothing
-    end=#
-    #=foreach(poisignal) do p
-        if p.start.file == p.stop.file
-            dt = DateTime() + p.stop.time
-            signal(h1).value = Dates.Hour(dt).value
-            signal(m1).value = Dates.Minute(dt).value
-            signal(s1).value = Dates.Second(dt).value
-            d = dt + p.stop.time - p.start.time
-            signal(h2).value = Dates.Hour(d).value
-            signal(m2).value = Dates.Minute(d).value
-            signal(s2).value = Dates.Second(d).value
-        end
-    end=#
-
-    #=poiadd = button("a")
-    poig = Grid()
-    poig[0,0] = widget(poiadd)
-    poisignal = map(_ -> POI(), poiadd)=#
-    # run
-
     # data
     tmp = readcsv(joinpath(folder, "metadata", "run.csv"))
     metadata = Dict{String, Vector{String}}()
@@ -257,7 +214,7 @@ function poirun(folder)
         Dict(k => value(v) for (k, v) in widgets)
     end
 
-    bind!(metadatasignal, metadatasignal2)
+    bind!(metadatasignal, metadatasignal2, initial=false)
 
 
     assdone = map(a) do aa
@@ -268,26 +225,26 @@ function poirun(folder)
                 filemenu = Menu(file)
                 check_ = MenuItem("Check")
                 checkh = signal_connect(check_, :activate) do _
-                    for y = 1:aa.nruns
-                        push!(aa.associations, (x, y))
+                    for r in aa.runs
+                        push!(aa.associations, (p, r))
                     end
                     push!(a, aa)
                 end
                 push!(filemenu, check_)
                 uncheck_ = MenuItem("Uncheck")
                 uncheckh = signal_connect(uncheck_, :activate) do _
-                    for y = 1:aa.nruns
-                        delete!(aa.associations, (x, y))
+                    for r in aa.runs
+                        delete!(aa.associations, (p, r))
                     end
                     push!(a, aa)
                 end
                 push!(filemenu, uncheck_)
-                hide_ = MenuItem("Hide")
+                #=hide_ = MenuItem("Hide")
                 hideh = signal_connect(hide_, :activate) do _
                     p.visible = false
                     push!(a, aa)
                 end
-                push!(filemenu, hide_)
+                push!(filemenu, hide_)=#
                 edit_ = MenuItem("Edit")
                 edith = signal_connect(edit_, :activate) do _
                     push!(poi, p.name)
@@ -303,13 +260,13 @@ function poirun(folder)
                     push!(h2, Dates.Hour(dt2).value)
                     push!(poilabel, p.label)
                     push!(comment, p.comment)
-                    deleteat!(aa, p)
+                    delete!(aa, p)
                 end
                 push!(filemenu, edit_)
                 push!(filemenu, SeparatorMenuItem())
                 delete = MenuItem("Delete")
                 deleteh = signal_connect(delete, :activate) do _
-                    deleteat!(aa, p)
+                    delete!(aa, p)
                     push!(a, aa)
                 end
                 push!(filemenu, delete)
@@ -320,42 +277,42 @@ function poirun(folder)
         end
         for (y, r) in enumerate(aa.runs)
             if r.visible
-                file = MenuItem("_$(shorten(string(join(values(r.metadata), ":")..., ":", r.repetition), 30)) $y")
+                file = MenuItem(string("_", shorten(string(join(values(r.metadata), ":")..., ":", r.repetition), 30)))
                 filemenu = Menu(file)
                 check_ = MenuItem("Check")
                 checkh = signal_connect(check_, :activate) do _
-                    for x = 1:aa.npois
-                        push!(aa.associations, (x, y))
+                    for p in aa.pois
+                        push!(aa.associations, (p, r))
                     end
                     push!(a, aa)
                 end
                 push!(filemenu, check_)
                 uncheck_ = MenuItem("Uncheck")
                 uncheckh = signal_connect(uncheck_, :activate) do _
-                    for x = 1:aa.npois
-                        delete!(aa.associations, (x, y))
+                    for p in aa.pois
+                        delete!(aa.associations, (p, r))
                     end
                     push!(a, aa)
                 end
                 push!(filemenu, uncheck_)
-                hide_ = MenuItem("Hide")
+                #=hide_ = MenuItem("Hide")
                 hideh = signal_connect(hide_, :activate) do _
                     r.visible = false
                     push!(a, aa)
                 end
-                push!(filemenu, hide_)
+                push!(filemenu, hide_)=#
                 edit_ = MenuItem("Edit")
                 edith = signal_connect(edit_, :activate) do _
                     for (k, v) in widgets
                         push!(v, r.metadata[k])
                     end
-                    deleteat!(aa, r)
+                    delete!(aa, r)
                 end
                 push!(filemenu, edit_)
                 push!(filemenu, SeparatorMenuItem())
                 delete = MenuItem("Delete")
                 deleteh = signal_connect(delete, :activate) do _
-                    deleteat!(aa, r)
+                    delete!(aa, r)
                     push!(a, aa)
                 end
                 push!(filemenu, delete)
@@ -366,7 +323,7 @@ function poirun(folder)
         end
         for (x, p) in enumerate(aa.pois), (y, run) in enumerate(aa.runs)
             if p.visible
-                key = (x,y)
+                key = (p, run)
                 cb = checkbox(key in aa.associations)
                 foreach(cb) do tf
                     tf ? push!(aa.associations, key) : delete!(aa.associations, key)
@@ -395,7 +352,16 @@ function poirun(folder)
     saves = Button("Save")
     saveh = signal_connect(saves, :clicked) do _
         save(folder, value(a))
+        if isempty(value(a))
+            exit()
+        end
         destroy(win)
+    end
+
+    clear = Button("Clear")
+    clearh = signal_connect(clear, :clicked) do _
+        empty!(value(a))
+        push!(a, value(a))
     end
 
     quits = Button("Quit")
@@ -406,7 +372,7 @@ function poirun(folder)
 
 
     savequit = Box(:v)
-    push!(savequit, saves, quits)
+    push!(savequit, saves, clear, quits)
     g[0,0] = Frame(savequit, "File")
     g[1,0] = Frame(poig, "POI")
     g[0,1] = Frame(rung, "Run")
@@ -420,4 +386,8 @@ function poirun(folder)
     end
     wait(c)
 
+end
+function main(folder::String) 
+    poirun(folder)
+    checkvideos(folder)
 end

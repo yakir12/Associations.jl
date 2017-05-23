@@ -1,15 +1,14 @@
 using Associations
 using Base.Test
-
 chars = []
 a = """!"#¤%&/()=?*_:;><,.-'§½`'äöåÄÖÅ\\\n \t\b"""
 for i in a
     push!(chars, i)
 end
 getstring(n = 1000) = join(rand(chars, n))
-
 # some base variables
 videofolder = "videofolder"
+
 videofiles = Associations.getVideoFiles(videofolder)
 
 
@@ -20,12 +19,12 @@ videofiles = Associations.getVideoFiles(videofolder)
         @test !isempty(a)
     end
     vf = [Associations.VideoFile(videofolder, file) for file in videofiles]
-    a = [Associations.VideoFile("a.mp4",[DateTime("2017-02-28T16:04:47")]), Associations.VideoFile("b.mp4",[DateTime("2017-03-02T15:38:25")])]
+    a = [Associations.VideoFile("a.mp4",DateTime("2017-02-28T16:04:47")), Associations.VideoFile("b.mp4",DateTime("2017-03-02T15:38:25"))]
     files = ["a.mp4", "b.mp4"]
     for file in videofiles
         ai = filter(x -> x.file == file, a)
         v = filter(x -> x.file == file, vf)
-        @test ai == v
+        @test ai[1] == v[1]
     end
 end
 
@@ -40,7 +39,7 @@ end
     da2 = Dict(:comment => getstring(), :name => "a")
     db = Dict(:comment => getstring(), :name => "b")
     dc = Dict(:comment => getstring(), :name => "c")
-    rs = Associations.Run[]
+    rs = Associations.OrderedSet{Associations.Run}()
     for d in [da1, da2, db, db, dc]
         push!(rs, d)
     end
@@ -49,54 +48,56 @@ end
         @test n == rep
     end
 
-    deleteat!(rs, Associations.Run(da1, 1, true))
+    delete!(rs, Associations.Run(da1, 1, true))
     @test length(rs) == 4
 end
 
 @testset "Association" begin
+
     npois = 3
     nruns = 4
-    p = Array(Associations.POI, npois)
+    p = Associations.OrderedSet{Associations.POI}()
     for i = 1:npois
-        pp = Associations.POI()
-        pp.name = string(i)
-        p[i] = pp
+        pp = Associations.POI(name = string(i))
+        push!(p, pp)
     end
-    r = Associations.Run[]
-    dicts = [Dict(:comment => getstring(i), :name => getstring(3)) for i = 1:nruns]
-    for d in dicts
-        push!(r, d)
+    r = Associations.OrderedSet{Associations.Run}()
+    for i = 1:nruns
+        push!(r, Dict(:comment => getstring(i), :name => getstring(3)))
     end
-    a = Associations.Association(p, r, Set())
+    a = Associations.Association(p, r, Associations.OrderedSet{Tuple{Associations.POI,Associations.Run}}())
 
-    @test a.npois == npois
-    @test a.nruns == nruns
+    @test length(a.pois) == npois
+    @test length(a.runs) == nruns
 
+    p = Associations.OrderedSet{Associations.POI}()
     for i = 1:npois
-        p[i].label = string(i)
+        pp = Associations.POI(name = string(i), label = string(i))
+        push!(p, pp)
     end
     push!(a, p...)
 
-    @test a.npois == 2npois
+    @test length(a.pois) == 2npois
 
     for i = 1:nruns
-        dicts[i][:name] = getstring(10)
+        push!(a, Dict(:comment => getstring(i), :name => getstring(3)))
     end
-    push!(a, dicts...)
 
-    @test a.nruns == 2nruns
+    @test length(a.runs) == 2nruns
 
-    deleteat!(a, p[1])
+    delete!(a, p[1])
 
-    @test a.npois == 2npois - 1
+    @test length(a.pois) == 2npois - 1
 
-    deleteat!(a, r[1])
+    delete!(a, r[1])
 
-    @test a.nruns == 2nruns - 1
+    @test length(a.runs) == 2nruns - 1
 
     empty!(a)
 
     @test a == Associations.Association()
+
+    @test isempty(a)
 
 end
 
@@ -104,8 +105,8 @@ end
     @testset "VideoFiles" begin
         vfs = Associations.loadVideoFiles(videofolder)
 
-        va = Associations.VideoFile("a.mp4",[DateTime("2017-02-28T16:04:47")])
-        vb = Associations.VideoFile("b.mp4",[DateTime("2017-03-02T15:38:25")])
+        va = Associations.VideoFile("a.mp4",DateTime("2017-02-28T16:04:47"))
+        vb = Associations.VideoFile("b.mp4",DateTime("2017-03-02T15:38:25"))
         @test first(filter(x -> x.file == "a.mp4", vfs)) == va
         @test first(filter(x -> x.file == "b.mp4", vfs)) == vb
     end
@@ -140,17 +141,20 @@ end
         txt = ["a"^i for i = 1:x]
         Associations.shorten(txt, y)
     end
-    
+
     @test all(all(length(k) <= x for (k,v) in testitsame(x, y)) for x = 1:9, y = 1:3)
 
     @test all(all(length(k) == min(length(v), 2y + 1) for (k,v) in testitdifferent(x, y)) for x = 1:9, y = 1:3)
 
     @test_throws SystemError Associations.openit("thisfiledoesnotexist.666")
 
-    @test Associations.openit(joinpath(videofolder, "a.mp4"))
+    #@test Associations.openit(joinpath(videofolder, "a.mp4"))
 
     d = Dict(string(x) => string(x) for x in 'a':'z')
     @test Associations.findshortfile("b", d) == "b"
     @test_throws ErrorException Associations.findshortfile("bad", d) == "b"
 
 end
+
+
+
