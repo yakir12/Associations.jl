@@ -1,4 +1,5 @@
 #!/usr/bin/julia
 using Associations
-folder = Gtk.open_dialog("Select videos-folder", action=Gtk.GtkFileChooserAction.SELECT_FOLDER)
+win = Gtk.Window("")
+folder = Gtk.open_dialog("Select videos-folder", win, action=Gtk.GtkFileChooserAction.SELECT_FOLDER)
 main(folder)

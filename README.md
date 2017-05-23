@@ -116,14 +116,14 @@ That's it! These 4 files contain *all* the necessary information for later proce
 ## Troubleshooting
 - *The initial navigation window is stuck, I can't choose the videos folder*
 If this happens you'll have to run the program from within Julia:
-1. Start a Julia-terminal
-2. Copy and paste the following code in the Julia-terminal:
-   ```julia
-   using Associations
-   folder = "<videos folder>"
-   main(folder)
-   ```
-   where `<videos folder>` is the path to the folder that contains all the videos you want to log (so replace `<videos folder>` with the actual path to your videos folder). 
-3. The program will run normally, and you can close the Julia terminal when you're done logging your videos.
+    1. Start a Julia-terminal
+    2. Copy and paste the following code in the Julia-terminal:
+       ```julia
+       using Associations
+       folder = "<videos folder>"
+       main(folder)
+       ```
+       where `<videos folder>` is the path to the folder that contains all the videos you want to log (so replace `<videos folder>` with the actual path to your videos folder). 
+    3. The program will run normally, and you can close the Julia terminal when you're done logging your videos.
    
 
