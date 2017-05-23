@@ -40,7 +40,7 @@ if is_windows()
         CreateDirectory(joinpath(basedir, "src", "exiftool"))
         end
        )
-    mv(joinpath(basedir, "src", target), joinpath(basedir, "src", "exiftool", binary_name), remove_destination = true)
+    mv(joinpath(basedir, "src", target), joinpath("src", "exiftool", binary_name), remove_destination = true)
 end
 
 cp(joinpath(Pkg.dir("Associations"), "src", "main.jl"), joinpath(homedir(), "BeetleLog.jl"), remove_destination = true)
