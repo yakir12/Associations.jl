@@ -99,7 +99,7 @@ Once you've created the `metadata` folder and the two `csv` files in your videos
 By clicking on a Run or POI, you can choose to: 
 1. `Check`: check all the associations for all the Runs/POIs for that specific POI/Run (like checking a row/column) 
 2. `Uncheck`: uncheck all the associations for all the Runs/POIs for that specific POI/Run (like checking a row/column) 
-3. `Hide`: hide a whole row/column out of sight. Use this to free-up some space if you are certain that you finished logging said Run/POI.
+> 3. `Hide`: hide a whole row/column out of sight. Use this to free-up some space if you are certain that you finished logging said Run/POI.
 4. `Edit`: the POI/Run console will get populated with the details of the POI/Run you want to edit, change the details you like and press `Add`. The edited POI/Run will update and be displayed at the end of the association pane (as if it was a newly added one).
 5. `Delete`: permanently deletes a specific POI/Run.
 
@@ -121,8 +121,7 @@ If this happens you'll have to run the program from within Julia:
    ```julia
    using Associations
    folder = "<videos folder>"
-   poirun(folder)
-   checkvideos(folder)
+   main(folder)
    ```
    where `<videos folder>` is the path to the folder that contains all the videos you want to log (so replace `<videos folder>` with the actual path to your videos folder). 
 3. The program will run normally, and you can close the Julia terminal when you're done logging your videos.
