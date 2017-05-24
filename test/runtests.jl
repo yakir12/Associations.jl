@@ -6,97 +6,101 @@ for i in a
     push!(chars, i)
 end
 getstring(n = 1000) = join(rand(chars, n))
+
 # some base variables
 videofolder = "videofolder"
 
 videofiles = Associations.getVideoFiles(videofolder)
 
-@testset "exiftool" begin 
-    for file in videofiles
+@testset "VideoFile" begin 
+    files = Dict("a.mp4" => VideoFile("a.mp4",DateTime("2017-02-28T16:04:47")), "b.mp4" => VideoFile("b.mp4",DateTime("2017-03-02T15:38:25")))
+    for (file, vf) in files
         f = joinpath(videofolder, file)
         a = readstring(`$(Associations.exiftool) -q -q $f`)
         @test !isempty(a)
+        @test VideoFile(videofolder, file) == vf
     end
-    vf = [Associations.VideoFile(videofolder, file) for file in videofiles]
-    a = [Associations.VideoFile("a.mp4",DateTime("2017-02-28T16:04:47")), Associations.VideoFile("b.mp4",DateTime("2017-03-02T15:38:25"))]
-    files = ["a.mp4", "b.mp4"]
-    for file in videofiles
-        ai = filter(x -> x.file == file, a)
-        v = filter(x -> x.file == file, vf)
-        @test ai[1] == v[1]
-    end
+    @test sort(getVideoFiles(videofolder)) == sort(collect(keys(files)))
+end
+
+@testset "Point" begin
+    @test Point("a", 1,1,1) == Point("a", Dates.Second(60*60 + 60 + 1))
 end
 
 @testset "POI" begin
-    @test Associations.POI() == Associations.POI("", Associations.Point("", 0, 0, 0), Associations.Point("", 0, 0, 0), "", "", true)
+    @test POI(name = "a") == POI("a", Point("", 0, 0, 0), Point("", 0, 0, 0), "", "", true)
 end
 
 @testset "Run" begin
-    @test Associations.Run() == Associations.Run(Dict(:nothing => "nothing"), "", true)
-
-    da1 = Dict(:comment => "ss", :name => "a")
-    da2 = Dict(:comment => "ss", :name => "a")
-    db = Dict(:comment => "ss", :name => "b")
-    dc = Dict(:comment => "ss", :name => "c")
-    rs = Associations.OrderedSet{Associations.Repetition}()
-    for d in [da1, da2, db, db, dc]
-        push!(rs, Associations.Run(d, getstring()))
-    end
-    for (name, rep) in zip(["a", "b", "c"], [2, 2, 1])
-        n = reduce((y,x) -> max(x.run.metadata[:name] == name ? x.repetition : 0, y), 0, rs)
-        @test n == rep
-    end
-
-    delete!(rs, rs[1])
-    @test length(rs) == 4
+    @test Run(comment = "a") == Run(Dict{Symbol, String}(), "a", true)
 end
 
-@testset "Association" begin
+@testset "push!" begin
+    a = Association()
 
-    npois = 3
-    nruns = 4
-    p = Associations.OrderedSet{Associations.POI}()
-    for i = 1:npois
-        pp = Associations.POI(name = string(i))
-        push!(p, pp)
+    push!(a, Run(Dict(Symbol(x) => string(x) for x in 'a':'z'), "a"))
+    @test length(a.runs) == 1
+    @test a.runs[1].repetition == 1
+    push!(a, Run(Dict(Symbol(x) => string(x) for x in 'a':'z'), "b", false))
+    @test length(a.runs) == 2
+    @test a.runs[2].repetition == 2
+    push!(a, Run(Dict(Symbol(x) => string(x) for x in 'b':'z'), "a"))
+    @test length(a.runs) == 3
+    @test a.runs[3].repetition == 1
+
+    push!(a, POI())
+    @test length(a.pois) == 1
+    push!(a, POI())
+    @test length(a.pois) == 1
+    push!(a, POI(name = "a"))
+    @test length(a.pois) == 2
+
+end
+
+@testset "delete!" begin
+
+    a = Association()
+    n1 = 4
+    for i = 1:n1
+        push!(a, Run(Dict(:a => "a"), string(i)))
     end
-    r = Associations.OrderedSet{Associations.Repetition}()
-    for i = 1:nruns
-        push!(r, Associations.Run(Dict(:name => getstring(3)), getstring(i)))
+    n2 = 3
+    for i = 1:n2
+        push!(a, Run(Dict(:b => "a"), string(i)))
     end
-    a = Associations.Association(p, r, Associations.Set{Tuple{Associations.POI,Associations.Repetition}}())
-
-    @test length(a.pois) == npois
-    @test length(a.runs) == nruns
-
-    p = Associations.OrderedSet{Associations.POI}()
-    for i = 1:npois
-        pp = Associations.POI(name = string(i), label = string(i))
-        push!(p, pp)
+    n3 = 4
+    for i = 1:n3
+        push!(a, POI(name = string(i)))
     end
-    push!(a, p...)
-
-    @test length(a.pois) == 2npois
-
-    for i = 1:nruns
-        push!(a, Associations.Run(Dict(:name => getstring(3)), getstring(i)))
+    for rep = 1:2, poi = 1:2
+        push!(a.associations, (POI(name = string(poi)), Repetition(Run(Dict(:a => "a"), string(rep)), rep)))
     end
 
-    @test length(a.runs) == 2nruns
+    delete!(a, Repetition(Run(Dict(:a => "a"), "2"), 2))
+    delete!(a, POI(name = "1"))
 
-    delete!(a, p[1])
+    b = Association()
+    for i in [1,3,4]
+        push!(b, Run(Dict(:a => "a"), string(i)))
+    end
+    n2 = 3
+    for i = 1:n2
+        push!(b, Run(Dict(:b => "a"), string(i)))
+    end
+    n3 = 4
+    for i = 2:n3
+        push!(b, POI(name = string(i)))
+    end
+    for rep = 1:1, poi = 2:2
+        push!(b.associations, (POI(name = string(poi)), Repetition(Run(Dict(:a => "a"), string(rep)), rep)))
+    end
 
-    @test length(a.pois) == 2npois - 1
+    @test a == b
 
-    delete!(a, r[1])
+    delete!(a, Repetition(Run(Dict(:c => "a"), "2"), 2))
+    delete!(a, POI(name = "z"))
 
-    @test length(a.runs) == 2nruns - 1
-
-    empty!(a)
-
-    @test a == Associations.Association()
-
-    @test isempty(a)
+    @test a == b
 
 end
 

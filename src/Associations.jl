@@ -73,7 +73,7 @@ POI(;name = "", start = Point("", Dates.Second(0)), stop = Point("", Dates.Secon
 end
 
 Run(metadata, comment) = Run(metadata, comment, true)
-Run(;metadata = Dict(:nothing => "nothing"), comment = "") = Run(metadata, comment)
+Run(;metadata = Dict{Symbol, String}(), comment = "") = Run(metadata, comment)
 
 @auto_hash_equals immutable Repetition
     run::Run
@@ -105,34 +105,39 @@ function push!(a::Association, r::Run)
     return a
 end
 
-# deletes
+# replace
 
-function delete!(a::Association, r::Repetition)
-    delete!(a.runs, r)
-    filter!(x -> last(x) != r, a.associations)
-    new = OrderedSet{Repetition}()
-    for x in a.runs
-        if x.run.metadata == r.run.metadata && x.repetition > r.repetition
-            n = Repetition(x.run, x.repetition - 1)
-            push!(new, n)
-            for ai in a.associations
-                if last(ai) == x
-                    push!(a.associations, (first(ai), n))
-                    delete!(a.associations, ai)
-                end
-            end
-        else
-            push!(new, x)
-        end
-    end
+replace(xs::OrderedSet{Repetition}, o::Repetition, n::Repetition) = OrderedSet{Repetition}(x == o ? n : x for x in xs)
+replace(xs::Set{Tuple{POI, Repetition}}, o::Repetition, n::Repetition) = Set{Tuple{POI, Repetition}}(last(x) == o ? (first(x), n) : x for x in xs)
+function replace(a::Association, o::Repetition, n::Repetition)
+    runs = replace(a.runs, o, n)
+    associations = replace(a.associations, o, n)
     empty!(a.runs)
-    push!(a.runs, new...)
+    push!(a.runs, runs...)
+    empty!(a.associations)
+    push!(a.associations, associations...)
     return a
 end
 
-function delete!(a::Association, r::POI)
-    delete!(a.pois, r)
-    filter!(x -> first(x) != r, a.associations)
+
+# deletes
+
+function delete!(a::Association, r::Repetition)
+    r in a.runs || return a
+    delete!(a.runs, r)
+    filter!(x -> last(x) != r, a.associations)
+    for x in a.runs
+        if x.run.metadata == r.run.metadata && x.repetition > r.repetition
+            replace(a, x, Repetition(x.run, x.repetition - 1))
+        end
+    end
+    return a
+end
+
+function delete!(a::Association, p::POI)
+    p in a.pois || return a
+    delete!(a.pois, p)
+    filter!(x -> first(x) != p, a.associations)
     return a
 end
 
