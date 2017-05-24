@@ -1,3 +1,4 @@
 add a main function that takes in the initial gui and the video in one | id:019051a35b8e629fed113b237b4197f141b5e27b
 convert all the `deleteat!` to delete! | id:a7041ca393e0782ea2c06d36052d876406d08d6a
 don't `checkvideo` if the associations are empty | id:d7b55eec00f4f6d09562bf7962de3e2043700b62
+maybe move the comment out of the Run and use some special set that keeps only unique values but counts how many repetitions there are per value | id:ec9a50853521efb7488d68a0bf82cdcc0a0ebf10

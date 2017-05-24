@@ -1,4 +1,3 @@
 separate the gui from the Associations module so that testing can be complete and faster | id:157023557653993dc5362b80568b0bab09347679
-fix the edit so that things don't jump around due to the delete and push | id:cb81e8014b5dc7b79d241df36e366348e1a3c42d
-maybe move the comment out of the Run and use some special set that keeps only unique values but counts how many repetitions there are per value | id:ec9a50853521efb7488d68a0bf82cdcc0a0ebf10
+fix the edit so that things work as expected | id:cb81e8014b5dc7b79d241df36e366348e1a3c42d
 add hide | id:f09fb7e058a6cfe939dfd6bda50742769eb72488

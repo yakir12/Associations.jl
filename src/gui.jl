@@ -91,7 +91,7 @@ end
 function poirun(folder)
 
     poisignal = Signal(POI())
-    metadatasignal = Signal(Dict{Symbol, String}())
+    metadatasignal = Signal(Run())
     added = merge(poisignal, metadatasignal)
     a = foldp(push!, loadAssociation(folder), added)
 
@@ -201,6 +201,7 @@ function poirun(folder)
             widgets[Symbol(k)] = dropdown(v)
         end
     end
+    run_comment = textarea("")
     runadd = button("Add")
     # layout
     rung = Grid()
@@ -208,10 +209,12 @@ function poirun(folder)
         rung[0,i - 1] = Label(first(kv))
         rung[1,i - 1] = last(kv).widget
     end
-    rung[0:1, nmd + 1] = widget(runadd)
+    rung[0, nmd + 1] = Label("Comment")
+    rung[1, nmd + 1] = widget(run_comment)
+    rung[0:1, nmd + 2] = widget(runadd)
     # function
-    metadatasignal2 = map(runadd, init = Dict(k => value(v) for (k, v) in widgets)) do _
-        Dict(k => value(v) for (k, v) in widgets)
+    metadatasignal2 = map(runadd, init = Run(Dict(k => value(v) for (k, v) in widgets), value(run_comment))) do _
+        Run(Dict(k => value(v) for (k, v) in widgets), value(run_comment))
     end
 
     bind!(metadatasignal, metadatasignal2, initial=false)
@@ -276,8 +279,8 @@ function poirun(folder)
             end
         end
         for (y, r) in enumerate(aa.runs)
-            if r.visible
-                file = MenuItem(string("_", shorten(string(join(values(r.metadata), ":")..., ":", r.repetition), 30)))
+            if r.run.visible
+                file = MenuItem(string("_", shorten(string(join(values(r.run.metadata), ":")..., ":", r.repetition), 30)))
                 filemenu = Menu(file)
                 check_ = MenuItem("Check")
                 checkh = signal_connect(check_, :activate) do _
@@ -303,11 +306,25 @@ function poirun(folder)
                 push!(filemenu, hide_)=#
                 edit_ = MenuItem("Edit")
                 edith = signal_connect(edit_, :activate) do _
-                    for (k, v) in widgets
-                        push!(v, r.metadata[k])
+                    comment_win = Window("LogBeetle")
+                    comment_comment = textarea(r.run.comment)
+                    comment_done = button("Edit")
+                    comment_v = Box(:v)
+                    push!(comment_v, comment_comment, comment_done)
+                    push!(comment_win, comment_v)
+                    showall(comment_win)
+                    foreach(comment_done, init = nothing) do _
+                        edit_comment!(aa, r, value(comment_comment))
+                        push!(a, aa)
+                        destroy(comment_win)
                     end
-                    delete!(aa, r)
                 end
+                    #=for (k, v) in widgets
+                        push!(v, r.run.metadata[k])
+                    end
+                    push!(run_comment, r.run.comment)
+                    delete!(aa, r)
+                end=#
                 push!(filemenu, edit_)
                 push!(filemenu, SeparatorMenuItem())
                 delete = MenuItem("Delete")

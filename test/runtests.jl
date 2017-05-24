@@ -33,22 +33,22 @@ end
 end
 
 @testset "Run" begin
-    @test Associations.Run() == Associations.Run(Dict(:nothing => "nothing"), 0, true)
+    @test Associations.Run() == Associations.Run(Dict(:nothing => "nothing"), "", true)
 
-    da1 = Dict(:comment => getstring(), :name => "a")
-    da2 = Dict(:comment => getstring(), :name => "a")
-    db = Dict(:comment => getstring(), :name => "b")
-    dc = Dict(:comment => getstring(), :name => "c")
-    rs = Associations.OrderedSet{Associations.Run}()
+    da1 = Dict(:comment => "ss", :name => "a")
+    da2 = Dict(:comment => "ss", :name => "a")
+    db = Dict(:comment => "ss", :name => "b")
+    dc = Dict(:comment => "ss", :name => "c")
+    rs = Associations.OrderedSet{Associations.Repetition}()
     for d in [da1, da2, db, db, dc]
-        push!(rs, d)
+        push!(rs, Associations.Run(d, getstring()))
     end
     for (name, rep) in zip(["a", "b", "c"], [2, 2, 1])
-        n = reduce((y,x) -> max(x.metadata[:name] == name ? x.repetition : 0, y), 0, rs)
+        n = reduce((y,x) -> max(x.run.metadata[:name] == name ? x.repetition : 0, y), 0, rs)
         @test n == rep
     end
 
-    delete!(rs, Associations.Run(da1, 1, true))
+    delete!(rs, rs[1])
     @test length(rs) == 4
 end
 
@@ -61,11 +61,11 @@ end
         pp = Associations.POI(name = string(i))
         push!(p, pp)
     end
-    r = Associations.OrderedSet{Associations.Run}()
+    r = Associations.OrderedSet{Associations.Repetition}()
     for i = 1:nruns
-        push!(r, Dict(:comment => getstring(i), :name => getstring(3)))
+        push!(r, Associations.Run(Dict(:name => getstring(3)), getstring(i)))
     end
-    a = Associations.Association(p, r, Associations.OrderedSet{Tuple{Associations.POI,Associations.Run}}())
+    a = Associations.Association(p, r, Associations.Set{Tuple{Associations.POI,Associations.Repetition}}())
 
     @test length(a.pois) == npois
     @test length(a.runs) == nruns
@@ -80,7 +80,7 @@ end
     @test length(a.pois) == 2npois
 
     for i = 1:nruns
-        push!(a, Dict(:comment => getstring(i), :name => getstring(3)))
+        push!(a, Associations.Run(Dict(:name => getstring(3)), getstring(i)))
     end
 
     @test length(a.runs) == 2nruns

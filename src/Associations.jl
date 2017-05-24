@@ -69,40 +69,31 @@ POI(;name = "", start = Point("", Dates.Second(0)), stop = Point("", Dates.Secon
 
 @auto_hash_equals immutable Run
     metadata::Dict{Symbol, String}
-    repetition::Int
+    comment::String
     visible::Bool
 end
 
-Run(metadata, repetition) = Run(metadata, repetition, true)
-Run(;metadata = Dict(:nothing => "nothing"), repetition = 0) = Run(metadata, repetition)
+Run(metadata, comment) = Run(metadata, comment, true)
+Run(;metadata = Dict(:nothing => "nothing"), comment = "") = Run(metadata, comment)
+
+@auto_hash_equals immutable Repetition
+    run::Run
+    repetition::Int
+end
 
 @auto_hash_equals immutable Association
     pois::OrderedSet{POI}
-    runs::OrderedSet{Run}
-    associations::OrderedSet{Tuple{POI, Run}}
+    runs::OrderedSet{Repetition}
+    associations::Set{Tuple{POI, Repetition}}
 end
 
-Association() = Association(OrderedSet{POI}(), OrderedSet{Run}(), OrderedSet{Tuple{POI, Run}}())
+Association() = Association(OrderedSet{POI}(), OrderedSet{Repetition}(), Set{Tuple{POI, Repetition}}())
 
 # pushes
 
-function push!(xs::OrderedSet{Run}, metadata::Dict{Symbol, String})
-    repetition = 0
-    for x in xs
-        # when counting the number of repetitions, ignore any discrepancy between the comments
-        same = true
-        for k in keys(metadata)
-            r"comment"i(string(k)) && continue
-            if metadata[k] != x.metadata[k]
-                same = false
-                break
-            end
-        end
-        same || continue
-        repetition = max(repetition, x.repetition)
-    end
-    r = Run(metadata, repetition + 1, true)
-    push!(xs, r)
+function push!(xs::OrderedSet{Repetition}, r::Run)
+    repetition = reduce((x, y) -> max(x, y.run.metadata == r.metadata ? y.repetition : 0), 0, xs) + 1
+    push!(xs, Repetition(r, repetition))
 end
 
 function push!(a::Association, t::POI)
@@ -110,29 +101,33 @@ function push!(a::Association, t::POI)
     return a
 end
 
-function push!(a::Association, metadata::Dict{Symbol, String})
-    push!(a.runs, metadata)
+function push!(a::Association, r::Run)
+    push!(a.runs, r)
     return a
 end
 
 # deletes
 
-#=function delete!(rs::Vector{Run}, r::Run)
-    metadata = r.metadata
-    repetition = r.repetition
-    filter!(x -> x != r, rs)
-    for x in rs
-        # when counting the number of repetitions, ignore any discrepancy between the comments
-        if x.repetition > repetition && all(r"comment"i(string(k)) ? true : metadata[k] == x.metadata[k] for k in keys(metadata))
-            x.repetition -= 1
-        end
-    end
-    return rs
-end=#
-
-function delete!(a::Association, r::Run)
+function delete!(a::Association, r::Repetition)
     delete!(a.runs, r)
     filter!(x -> last(x) != r, a.associations)
+    new = OrderedSet{Repetition}()
+    for x in a.runs
+        if x.run.metadata == r.run.metadata && x.repetition > r.repetition
+            n = Repetition(x.run, x.repetition - 1)
+            push!(new, n)
+            for ai in a.associations
+                if last(ai) == x
+                    push!(a.associations, (first(ai), n))
+                    delete!(a.associations, ai)
+                end
+            end
+        else
+            push!(new, x)
+        end
+    end
+    empty!(a.runs)
+    push!(a.runs, new...)
     return a
 end
 
@@ -169,8 +164,8 @@ function save(folder::String, x::OrderedSet{POI})
     writecsv(joinpath(folder, "pois.csv"), a, quotes = true)
 end
 
-function save(folder::String, x::OrderedSet{Run})
-    ks = sort(collect(keys(x[1].metadata)))
+function save(folder::String, x::OrderedSet{Repetition})
+    ks = sort(collect(keys(x[1].run.metadata)))
     header = string.(ks)
     push!(header, "repetition")
     n = length(x)
@@ -178,8 +173,9 @@ function save(folder::String, x::OrderedSet{Run})
     a[1,:] .= header
     for (i, r) in enumerate(x)
         for (j, k) in enumerate(ks)
-            a[i + 1, j] = r.metadata[k]
+            a[i + 1, j] = r.run.metadata[k]
         end
+        a[i + 1, end] = r.run.comment
         a[i + 1, end] = string(r.repetition)
     end
     a .= strip.(a)
@@ -204,6 +200,31 @@ function save(folder::String, a::Association)
         rm(joinpath(folder, "associations.csv"), force=true)
     end
 end
+
+# edit comment
+
+function edit_comment!(a::Association, x::Repetition, c::String)
+    x.run.comment == c && return a
+    new = OrderedSet{Repetition}()
+    for xi in a.runs
+        if xi == x
+            n = Repetition(Run(x.run.metadata, c), x.repetition)
+            push!(new, n)
+            for ai in a.associations
+                if last(ai) == x
+                    push!(a.associations, (first(ai), n))
+                    delete!(a.associations, ai)
+                end
+            end
+        else
+            push!(new, xi)
+        end
+    end
+    empty!(a.runs)
+    push!(a.runs, new...)
+    return a
+end
+
 
 # loads
 
@@ -235,9 +256,9 @@ function loadPOIs(folder::String)::OrderedSet{POI}
     return tgs
 end
 
-function loadRuns(folder::String)::OrderedSet{Run}
+function loadRuns(folder::String)::OrderedSet{Repetition}
     filescsv = joinpath(folder, "runs.csv")
-    rs = OrderedSet{Run}()
+    rs = OrderedSet{Repetition}()
     if isfile(filescsv) 
         a, ks = readcsv(filescsv, String, header = true, quotes = true)
         ks = Symbol.(strip.(ks))
@@ -245,11 +266,12 @@ function loadRuns(folder::String)::OrderedSet{Run}
         nrow, ncol = size(a)
         for i = 1:nrow
             metadata = Dict{Symbol, String}()
-            for j = 1:ncol - 1
+            for j = 1:ncol - 2
                 metadata[ks[j]] = a[i, j]
             end
+            comment = a[i, ncol - 1]
             repetition = parse(Int, a[i, ncol])
-            push!(rs, Run(metadata, repetition, true))
+            push!(rs, Repetition(Run(metadata, comment), repetition))
         end
     end
     return rs
@@ -260,7 +282,7 @@ function loadAssociation(folder::String)::Association
     ts = loadPOIs(folder)
     rs = loadRuns(folder)
     filescsv = joinpath(folder, "associations.csv")
-    as = OrderedSet{Tuple{POI, Run}}()
+    as = Set{Tuple{POI, Repetition}}()
     if isfile(filescsv) 
         a, ks = readcsv(filescsv, Int, header = true)
         nrow, ncol = size(a)
