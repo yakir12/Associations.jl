@@ -5,7 +5,7 @@ using DataStructures, AutoHashEquals
 
 import Base: push!, empty!, delete!, isempty
 
-export VideoFile, Point, POI, Run, Repetition, Association, getVideoFiles, loadAssociation, loadVideoFiles, push!, empty!, delete!, isempty
+export VideoFile, Point, POI, Run, Repetition, Association, getVideoFiles, loadAssociation, loadVideoFiles, save, push!, empty!, delete!, isempty
 
 exiftool = joinpath(Pkg.dir("Associations"), "deps", "src", "exiftool", "exiftool")
 if is_windows()
