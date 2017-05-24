@@ -1,12 +1,11 @@
 __precompile__()
 module Associations
 
-using Gtk.ShortNames, GtkReactive, DataStructures, AutoHashEquals
+using DataStructures, AutoHashEquals
 
-import Base: push!, empty!, delete!, isempty#, hash, ==
+import Base: push!, empty!, delete!, isempty
 
-export main
-#export VideoFile, Point, POI, Run, Association, getVideoFiles, push!, save, shorten, openit, ==, empty!, loadAssociation, loadVideoFiles, poirun, checkvideos
+export VideoFile, Point, POI, Run, Repetition, Association, getVideoFiles, loadAssociation, loadVideoFiles, push!, empty!, delete!, isempty
 
 exiftool = joinpath(Pkg.dir("Associations"), "deps", "src", "exiftool", "exiftool")
 if is_windows()
@@ -303,10 +302,5 @@ function empty!(a::Association)
 end
 
 isempty(a::Association) = isempty(a.pois) && isempty(a.runs) && isempty(a.associations)
-
-
-include(joinpath(Pkg.dir("Associations"), "src", "util.jl"))
-
-include(joinpath(Pkg.dir("Associations"), "src", "gui.jl"))
 
 end # module

@@ -11,7 +11,6 @@ videofolder = "videofolder"
 
 videofiles = Associations.getVideoFiles(videofolder)
 
-
 @testset "exiftool" begin 
     for file in videofiles
         f = joinpath(videofolder, file)
@@ -128,33 +127,4 @@ end
         isdir(testlog) && rm(testlog, recursive = true)
     end
 end
-
-@testset "util" begin
-
-    @test all(length(Associations.shorten("a"^x, y)) == (x <= 2y + 1 ? x : 2y + 1) for x = 0:8, y = 0:3)
-
-    function testitdifferent(x, y)
-        txt = [join(select('a':'z', 1:i)) for i = 1:x]
-        Associations.shorten(txt, y)
-    end
-    function testitsame(x, y)
-        txt = ["a"^i for i = 1:x]
-        Associations.shorten(txt, y)
-    end
-
-    @test all(all(length(k) <= x for (k,v) in testitsame(x, y)) for x = 1:9, y = 1:3)
-
-    @test all(all(length(k) == min(length(v), 2y + 1) for (k,v) in testitdifferent(x, y)) for x = 1:9, y = 1:3)
-
-    @test_throws SystemError Associations.openit("thisfiledoesnotexist.666")
-
-    #@test Associations.openit(joinpath(videofolder, "a.mp4"))
-
-    d = Dict(string(x) => string(x) for x in 'a':'z')
-    @test Associations.findshortfile("b", d) == "b"
-    @test_throws ErrorException Associations.findshortfile("bad", d) == "b"
-
-end
-
-
 
