@@ -166,15 +166,15 @@ end
 function save(folder::String, x::OrderedSet{Repetition})
     ks = sort(collect(keys(x[1].run.metadata)))
     header = string.(ks)
-    push!(header, "repetition")
+    push!(header, "comment", "repetition")
     n = length(x)
-    a = Matrix{String}(n + 1, length(ks) + 1)
+    a = Matrix{String}(n + 1, length(header))
     a[1,:] .= header
     for (i, r) in enumerate(x)
         for (j, k) in enumerate(ks)
             a[i + 1, j] = r.run.metadata[k]
         end
-        a[i + 1, end] = r.run.comment
+        a[i + 1, end - 1] = r.run.comment
         a[i + 1, end] = string(r.repetition)
     end
     a .= strip.(a)
@@ -248,6 +248,7 @@ function loadPOIs(folder::String)::OrderedSet{POI}
         a, _ = readcsv(filescsv, String, header = true, quotes = true)
         a .= strip.(a)
         nrow, ncol = size(a)
+        @assert ncol == 7
         for i = 1:nrow
             push!(tgs, POI(a[i, 1], Point(a[i, 2], Dates.Second(parse(Int, a[i, 3]))), Point(a[i, 4], Dates.Second(parse(Int, a[i, 5]))), a[i, 6], a[i, 7]))
         end
@@ -262,7 +263,9 @@ function loadRuns(folder::String)::OrderedSet{Repetition}
         a, ks = readcsv(filescsv, String, header = true, quotes = true)
         ks = Symbol.(strip.(ks))
         a .= strip.(a)
+        nks = length(ks)
         nrow, ncol = size(a)
+        @assert nks == ncol > 2
         for i = 1:nrow
             metadata = Dict{Symbol, String}()
             for j = 1:ncol - 2
