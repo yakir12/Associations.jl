@@ -176,15 +176,19 @@ end
     end
 
     @testset "Association" begin
+
         a = Association()
+        d = Dict(Symbol(join(rand('a':'z', 10))) => getstring(i) for i = 1:100:1000)
+        r(comment) = Run(d, comment)
         for i = 1:10
-            push!(a, Run(Dict(:a => "a"), string(i)))
+            push!(a, r(string(i)))
         end
         for i = 1:13
             push!(a, POI(name = string(i)))
         end
+        push!(a, POI(getstring(), Point(getstring(), Dates.Second(abs(rand(Int)))), Point(getstring(), Dates.Second(abs(rand(Int)))), getstring(), getstring(), rand(Bool)))
         for rep = 1:7, poi = 1:10
-            push!(a, (POI(name = string(poi)), Repetition(Run(Dict(:a => "a"), string(rep)), rep)))
+            push!(a, (POI(name = string(poi)), Repetition(r(string(rep)), rep)))
         end
 
         save(folder, a)

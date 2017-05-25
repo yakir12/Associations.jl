@@ -1,1 +1,2 @@
-see how I can improve my tests unittest | id:50f7df0365b393610c6ed3185c5fd788dd4fa086
+maybe standardize the test so that you have set study cases | id:79b3ea69ed055744e2a59059314cd41d8eddcd00
+think about restructuring the runs so that it works mor like a dict, the keys for the POIs are the same across the whole Association | id:a3e7ffaad39c0c461ddb55b7dca904ad77762133
