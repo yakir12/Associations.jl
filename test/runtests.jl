@@ -1,4 +1,4 @@
-using Associations
+using Associations, DataStructures
 using Base.Test
 chars = []
 a = """!"#¤%&/()=?*_:;><,.-'§½`'äöåÄÖÅ\\\n \t\b"""
@@ -10,7 +10,7 @@ getstring(n = 1000) = join(rand(chars, n))
 # some base variables
 videofolder = "videofolder"
 
-videofiles = Associations.getVideoFiles(videofolder)
+videofiles = getVideoFiles(videofolder)
 
 @testset "VideoFile" begin 
     files = Dict("a.mp4" => VideoFile("a.mp4",DateTime("2017-02-28T16:04:47")), "b.mp4" => VideoFile("b.mp4",DateTime("2017-03-02T15:38:25")))
@@ -54,6 +54,42 @@ end
     @test length(a.pois) == 1
     push!(a, POI(name = "a"))
     @test length(a.pois) == 2
+
+    b = OrderedSet{Repetition}()
+    push!(b, Run(Dict(Symbol(x) => string(x) for x in 'a':'z'), "a"))
+    push!(b, Run(Dict(Symbol(x) => string(x) for x in 'a':'z'), "b", false))
+
+    push!(a, (POI(), b[1]))
+    push!(a, (POI(name = "a"), b[2]))
+
+    @test a.associations == Set([(POI(), b[1]), (POI(name = "a"), b[2])])
+
+end
+
+@testset "replace!" begin
+
+    a = Association()
+    for i = 1:10
+        push!(a, Run(Dict(:a => "a"), string(i)))
+    end
+    for i = 1:13
+        push!(a, POI(name = string(i)))
+    end
+    for rep = 1:7, poi = 1:10
+        push!(a, (POI(name = string(poi)), Repetition(Run(Dict(:a => "a"), string(rep)), rep)))
+    end
+
+    replace!(a, POI(name = "4"), POI(name = "a"))
+
+    @test !(POI(name = "4") in a.pois) && POI(name = "a") in a.pois
+    @test !(POI(name = "4") in map(first, a.associations)) && POI(name = "a") in map(first, a.associations)
+
+    o = Repetition(Run(Dict(:a => "a"), "2"), 2)
+    n = Repetition(Run(Dict(:a => "zzz"), "skldjfh"), 333)
+    replace!(a, o, n)
+
+    @test !(o in a.runs) && n in a.runs
+    @test !(o in map(last, a.associations)) && n in map(last, a.associations)
 
 end
 
@@ -102,33 +138,76 @@ end
 
     @test a == b
 
+    delete!(a, (POI(name = "2"), Repetition(Run(Dict(:a => "a"), "1"), 1)))
+
+    @test a.associations == Set{Tuple{POI, Repetition}}()
+
 end
 
 @testset "Load & save" begin
+    folder = joinpath(tempdir(), tempname())
+    mkpath(folder)
     @testset "VideoFiles" begin
-        vfs = Associations.loadVideoFiles(videofolder)
+        va = VideoFile("a.mp4",DateTime("2017-02-28T16:04:47"))
+        vb = VideoFile("b.mp4",DateTime("2017-03-02T15:38:25"))
+        vfs = Set([va, vb])
+        save(folder, vfs)
+        @test vfs == loadVideoFiles(folder)
+    end
 
-        va = Associations.VideoFile("a.mp4",DateTime("2017-02-28T16:04:47"))
-        vb = Associations.VideoFile("b.mp4",DateTime("2017-03-02T15:38:25"))
-        @test first(filter(x -> x.file == "a.mp4", vfs)) == va
-        @test first(filter(x -> x.file == "b.mp4", vfs)) == vb
+    @testset "POI" begin
+        a = OrderedSet{POI}()
+        for i = 1:4
+            push!(a, POI(name = string(i), start = Point(file = string(i), time = Dates.Second(i)), stop = Point(file = string(i), time = Dates.Second(i + 1)), label = string(i), comment = string(i)))
+        end
+        save(folder, a)
+
+        @test a == loadPOIs(folder)
+    end
+
+    @testset "Run" begin
+        a = OrderedSet{Repetition}()
+        for i = 1:4
+            push!(a, Run(Dict(Symbol(j) => string(j) for j = 1:10), string(i)))
+        end
+        save(folder, a)
+
+        @test a == loadRuns(folder)
     end
 
     @testset "Association" begin
-
-        x = Associations.loadAssociation(videofolder)
-        testlog = joinpath(tempdir(), "testlog")
-        isdir(testlog) && rm(testlog, recursive = true)
-        mkdir(testlog)
-        Associations.save(testlog, x)
-
-        vfs = Associations.loadVideoFiles(videofolder)
-        Associations.save(testlog, vfs)
-
-        for f in readdir(joinpath(testlog, "log"))
-            @test readstring(joinpath(testlog, "log", f)) == readstring(joinpath(videofolder, "log", f)) 
+        a = Association()
+        for i = 1:10
+            push!(a, Run(Dict(:a => "a"), string(i)))
         end
-        isdir(testlog) && rm(testlog, recursive = true)
+        for i = 1:13
+            push!(a, POI(name = string(i)))
+        end
+        for rep = 1:7, poi = 1:10
+            push!(a, (POI(name = string(poi)), Repetition(Run(Dict(:a => "a"), string(rep)), rep)))
+        end
+
+        save(folder, a)
+
+        @test a == loadAssociation(folder)
+
     end
+end
+
+@testset "Other" begin
+    a = Association()
+    for i = 1:10
+        push!(a, Run(Dict(:a => "a"), string(i)))
+    end
+    for i = 1:13
+        push!(a, POI(name = string(i)))
+    end
+    for rep = 1:7, poi = 1:10
+        push!(a, (POI(name = string(poi)), Repetition(Run(Dict(:a => "a"), string(rep)), rep)))
+    end
+
+    @test empty!(a) == Association()
+    @test isempty(a)
+
 end
 

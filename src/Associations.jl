@@ -5,12 +5,10 @@ using DataStructures, AutoHashEquals
 
 import Base: push!, empty!, delete!, isempty
 
-export VideoFile, Point, POI, Run, Repetition, Association, getVideoFiles, loadAssociation, loadVideoFiles, save, push!, empty!, delete!, isempty
+export VideoFile, Point, POI, Run, Repetition, Association, getVideoFiles, loadVideoFiles, loadPOIs, loadRuns, loadAssociation, save, push!, empty!, delete!, isempty, replace!
 
-exiftool = joinpath(Pkg.dir("Associations"), "deps", "src", "exiftool", "exiftool")
-if is_windows()
-    exiftool *= ".exe"
-end
+exiftool_base = joinpath(Pkg.dir("Associations"), "deps", "src", "exiftool", "exiftool")
+const exiftool = exiftool_base*(is_windows() ? ".exe" : "")
 
 const exts = [".webm", ".mkv", ".flv", ".flv", ".vob", ".ogv", ".ogg", ".drc", ".mng", ".avi", ".mov", ".qt", ".wmv", ".yuv", ".rm", ".rmvb", ".asf", ".amv", ".mp4", ".m4p", ".m4v", ".mpg", ".mp2", ".mpeg", ".mpe", ".mpv", ".mpg", ".mpeg", ".m2v", ".m4v", ".svi", ".3gp", ".3g2", ".mxf", ".roq", ".nsv", ".flv", ".f4v", ".f4p", ".f4a", ".f4b", ".MTS", ".DS_Store"]
 
@@ -51,6 +49,7 @@ end
     time::Dates.Second
 end
 
+Point(;file = "", time = Dates.Second(0)) = Point(file, time)
 Point(f::String, h::Int, m::Int, s::Int) = Point(f, sum(Dates.Second.([Dates.Hour(h), Dates.Minute(m), Dates.Second(s)])))
 
 @auto_hash_equals immutable POI
@@ -64,7 +63,7 @@ end
 
 POI(name, start, stop, label, comment) = POI(name, start, stop, label, comment, true)
 
-POI(;name = "", start = Point("", Dates.Second(0)), stop = Point("", Dates.Second(0)), label = "", comment = "") = POI(name, start, stop, label, comment)
+POI(;name = "", start = Point(), stop = Point(), label = "", comment = "") = POI(name, start, stop, label, comment)
 
 @auto_hash_equals immutable Run
     metadata::Dict{Symbol, String}
@@ -90,10 +89,9 @@ Association() = Association(OrderedSet{POI}(), OrderedSet{Repetition}(), Set{Tup
 
 # pushes
 
-function push!(xs::OrderedSet{Repetition}, r::Run)
-    repetition = reduce((x, y) -> max(x, y.run.metadata == r.metadata ? y.repetition : 0), 0, xs) + 1
-    push!(xs, Repetition(r, repetition))
-end
+run2repetition(xs::OrderedSet{Repetition}, r::Run) = Repetition(r, reduce((x, y) -> max(x, y.run.metadata == r.metadata ? y.repetition : 0), 0, xs) + 1)
+
+push!(xs::OrderedSet{Repetition}, r::Run) = push!(xs, run2repetition(xs, r))
 
 function push!(a::Association, t::POI)
     push!(a.pois, t)
@@ -105,13 +103,20 @@ function push!(a::Association, r::Run)
     return a
 end
 
+function push!(a::Association, x::Tuple{POI, Repetition})
+    @assert first(x) in a.pois
+    @assert last(x) in a.runs
+    push!(a.associations, x)
+end
+
+
 # replace
 
-replace(xs::OrderedSet{Repetition}, o::Repetition, n::Repetition) = OrderedSet{Repetition}(x == o ? n : x for x in xs)
-replace(xs::Set{Tuple{POI, Repetition}}, o::Repetition, n::Repetition) = Set{Tuple{POI, Repetition}}(last(x) == o ? (first(x), n) : x for x in xs)
-function replace(a::Association, o::Repetition, n::Repetition)
-    runs = replace(a.runs, o, n)
-    associations = replace(a.associations, o, n)
+replace!(xs::OrderedSet{Repetition}, o::Repetition, n::Repetition) = OrderedSet{Repetition}(x == o ? n : x for x in xs)
+replace!(xs::Set{Tuple{POI, Repetition}}, o::Repetition, n::Repetition) = Set{Tuple{POI, Repetition}}(last(x) == o ? (first(x), n) : x for x in xs)
+function replace!(a::Association, o::Repetition, n::Repetition)
+    runs = replace!(a.runs, o, n)
+    associations = replace!(a.associations, o, n)
     empty!(a.runs)
     push!(a.runs, runs...)
     empty!(a.associations)
@@ -119,6 +124,17 @@ function replace(a::Association, o::Repetition, n::Repetition)
     return a
 end
 
+replace!(xs::OrderedSet{POI}, o::POI, n::POI) = OrderedSet{POI}(x == o ? n : x for x in xs)
+replace!(xs::Set{Tuple{POI, Repetition}}, o::POI, n::POI) = Set{Tuple{POI, Repetition}}(first(x) == o ? (n, last(x)) : x for x in xs)
+function replace!(a::Association, o::POI, n::POI)
+    pois = replace!(a.pois, o, n)
+    associations = replace!(a.associations, o, n)
+    empty!(a.pois)
+    push!(a.pois, pois...)
+    empty!(a.associations)
+    push!(a.associations, associations...)
+    return a
+end
 
 # deletes
 
@@ -128,7 +144,7 @@ function delete!(a::Association, r::Repetition)
     filter!(x -> last(x) != r, a.associations)
     for x in a.runs
         if x.run.metadata == r.run.metadata && x.repetition > r.repetition
-            replace(a, x, Repetition(x.run, x.repetition - 1))
+            replace!(a, x, Repetition(x.run, x.repetition - 1))
         end
     end
     return a
@@ -141,23 +157,36 @@ function delete!(a::Association, p::POI)
     return a
 end
 
+function delete!(a::Association, x::Tuple{POI, Repetition})
+    x in a.associations || return a
+    @assert first(x) in a.pois
+    @assert last(x) in a.runs
+    delete!(a.associations, x)
+    return a
+end
+
 # saves
 
-function save(folder::String, x::Vector{VideoFile})
-    if isempty(x)
-        rm(joinpath(folder, "log", "files.csv"), force=true)
-    else
-        n = length(x)
-        a = Matrix{String}(n + 1,2)
-        a[1,:] .= ["file", "date and time"]
-        for (i, v) in enumerate(x)
-            a[i + 1, :] .= [v.file, string(v.datetime)]
-        end
-        writecsv(joinpath(folder, "log", "files.csv"), a, quotes = true)
+function prep_file(folder::String, what::String)::String
+    folder = joinpath(folder, "log")
+    isdir(folder) || mkdir(folder)
+    return joinpath(folder, "$what.csv")
+end
+
+function save(folder::String, x::Set{VideoFile})
+    file = prep_file(folder, "files")
+    #isempty(x) && rm(file, force=true)
+    n = length(x)
+    a = Matrix{String}(n + 1,2)
+    a[1,:] .= ["file", "date and time"]
+    for (i, v) in enumerate(x)
+        a[i + 1, :] .= [v.file, string(v.datetime)]
     end
+    writecsv(file, a, quotes = true)
 end
 
 function save(folder::String, x::OrderedSet{POI}) 
+    file = prep_file(folder, "pois")
     n = length(x)
     a = Matrix{String}(n + 1,7)
     a[1,:] .= ["name", "start file", "start time (seconds)", "stop file", "stop time (seconds)", "label", "comments"]
@@ -165,10 +194,11 @@ function save(folder::String, x::OrderedSet{POI})
         a[i + 1, :] .= [t.name, t.start.file, string(t.start.time.value), t.stop.file, string(t.stop.time.value), t.label, t.comment]
     end
     a .= strip.(a)
-    writecsv(joinpath(folder, "pois.csv"), a, quotes = true)
+    writecsv(file, a, quotes = true)
 end
 
 function save(folder::String, x::OrderedSet{Repetition})
+    file = prep_file(folder, "runs")
     ks = sort(collect(keys(x[1].run.metadata)))
     header = string.(ks)
     push!(header, "comment", "repetition")
@@ -183,31 +213,25 @@ function save(folder::String, x::OrderedSet{Repetition})
         a[i + 1, end] = string(r.repetition)
     end
     a .= strip.(a)
-    writecsv(joinpath(folder, "runs.csv"), a, quotes = true)
+    writecsv(file, a, quotes = true)
 end
 
 function save(folder::String, a::Association)
-    folder = joinpath(folder, "log")
-    isdir(folder) || mkdir(folder)
-    isempty(a.pois) ? rm(joinpath(folder, "pois.csv"), force=true) : save(folder, a.pois)
-    isempty(a.runs) ? rm(joinpath(folder, "runs.csv"), force=true) : save(folder, a.runs)
-    if !isempty(a.associations)
-        open(joinpath(folder, "associations.csv"), "w") do o
-            println(o, "POI number, run number")
-            for (t, r) in a.associations
-                ti = findfirst(a.pois, t)
-                ri = findfirst(a.runs, r)
-                println(o, ti, ",", ri)
-            end
+    save(folder, a.pois)
+    save(folder, a.runs)
+    file = prep_file(folder, "associations")
+    open(file, "w") do o
+        println(o, "POI number, run number")
+        for (t, r) in a.associations
+            ti = findfirst(a.pois, t)
+            ri = findfirst(a.runs, r)
+            println(o, ti, ",", ri)
         end
-    else
-        rm(joinpath(folder, "associations.csv"), force=true)
     end
 end
-
 # edit comment
 
-function edit_comment!(a::Association, x::Repetition, c::String)
+#=function edit_comment!(a::Association, x::Repetition, c::String)
     x.run.comment == c && return a
     new = OrderedSet{Repetition}()
     for xi in a.runs
@@ -227,27 +251,29 @@ function edit_comment!(a::Association, x::Repetition, c::String)
     empty!(a.runs)
     push!(a.runs, new...)
     return a
-end
+end=#
 
 
 # loads
 
-function loadVideoFiles(folder::String)::Vector{VideoFile}
+function loadVideoFiles(folder::String)::Set{VideoFile}
     filescsv = joinpath(folder, "log", "files.csv")
-    vfs = VideoFile[]
+    vfs = Set{VideoFile}()
     if isfile(filescsv) 
         a, _ = readcsv(filescsv, String, header = true, quotes = true)
         a .= strip.(a)
         nrow, ncol = size(a)
         for i = 1:nrow
-            push!(vfs, VideoFile(a[i, 1], DateTime(a[i, 2])))
+            vf = VideoFile(a[i, 1], DateTime(a[i, 2]))
+            @assert !(vf in vfs)
+            push!(vfs, vf)
         end
     end
     return vfs
 end
 
 function loadPOIs(folder::String)::OrderedSet{POI}
-    filescsv = joinpath(folder, "pois.csv")
+    filescsv = joinpath(folder, "log", "pois.csv")
     tgs = OrderedSet{POI}()
     if isfile(filescsv) 
         a, _ = readcsv(filescsv, String, header = true, quotes = true)
@@ -255,14 +281,16 @@ function loadPOIs(folder::String)::OrderedSet{POI}
         nrow, ncol = size(a)
         @assert ncol == 7
         for i = 1:nrow
-            push!(tgs, POI(a[i, 1], Point(a[i, 2], Dates.Second(parse(Int, a[i, 3]))), Point(a[i, 4], Dates.Second(parse(Int, a[i, 5]))), a[i, 6], a[i, 7]))
+            tg = POI(a[i, 1], Point(a[i, 2], Dates.Second(parse(Int, a[i, 3]))), Point(a[i, 4], Dates.Second(parse(Int, a[i, 5]))), a[i, 6], a[i, 7])
+            @assert !(tg in tgs)
+            push!(tgs, tg)
         end
     end
     return tgs
 end
 
 function loadRuns(folder::String)::OrderedSet{Repetition}
-    filescsv = joinpath(folder, "runs.csv")
+    filescsv = joinpath(folder, "log", "runs.csv")
     rs = OrderedSet{Repetition}()
     if isfile(filescsv) 
         a, ks = readcsv(filescsv, String, header = true, quotes = true)
@@ -278,17 +306,18 @@ function loadRuns(folder::String)::OrderedSet{Repetition}
             end
             comment = a[i, ncol - 1]
             repetition = parse(Int, a[i, ncol])
-            push!(rs, Repetition(Run(metadata, comment), repetition))
+            r = Repetition(Run(metadata, comment), repetition)
+            @assert !(r in rs)
+            push!(rs, r)
         end
     end
     return rs
 end
 
 function loadAssociation(folder::String)::Association
-    folder = joinpath(folder, "log")
     ts = loadPOIs(folder)
     rs = loadRuns(folder)
-    filescsv = joinpath(folder, "associations.csv")
+    filescsv = joinpath(folder, "log", "associations.csv")
     as = Set{Tuple{POI, Repetition}}()
     if isfile(filescsv) 
         a, ks = readcsv(filescsv, Int, header = true)
@@ -307,6 +336,7 @@ function empty!(a::Association)
     empty!(a.pois)
     empty!(a.runs)
     empty!(a.associations)
+    return a
 end
 
 isempty(a::Association) = isempty(a.pois) && isempty(a.runs) && isempty(a.associations)
