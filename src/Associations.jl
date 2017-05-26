@@ -1,7 +1,7 @@
 __precompile__()
 module Associations
 
-using DataStructures, AutoHashEquals
+using DataStructures, AutoHashEquals, Base.Dates
 
 import Base: push!, empty!, delete!, isempty
 
@@ -46,11 +46,11 @@ end
 
 @auto_hash_equals immutable Point
     file::String
-    time::Dates.Second
+    time::Second
 end
 
-Point(;file = "", time = Dates.Second(0)) = Point(file, time)
-Point(f::String, h::Int, m::Int, s::Int) = Point(f, sum(Dates.Second.([Dates.Hour(h), Dates.Minute(m), Dates.Second(s)])))
+Point(;file = "", time = Second(0)) = Point(file, time)
+Point(f::String, h::Int, m::Int, s::Int) = Point(f, sum(Second.([Hour(h), Minute(m), Second(s)])))
 
 @auto_hash_equals immutable POI
     name::String
@@ -115,22 +115,27 @@ end
 replace!(xs::OrderedSet{Repetition}, o::Repetition, n::Repetition) = OrderedSet{Repetition}(x == o ? n : x for x in xs)
 replace!(xs::Set{Tuple{POI, Repetition}}, o::Repetition, n::Repetition) = Set{Tuple{POI, Repetition}}(last(x) == o ? (first(x), n) : x for x in xs)
 function replace!(a::Association, o::Repetition, n::Repetition)
+    o == n && return a
     runs = replace!(a.runs, o, n)
-    associations = replace!(a.associations, o, n)
     empty!(a.runs)
     push!(a.runs, runs...)
+    isempty(a.associations) && return a 
+    associations = replace!(a.associations, o, n)
     empty!(a.associations)
     push!(a.associations, associations...)
     return a
 end
+replace!(a::Association, o::Repetition, n::Run) = replace!(a, o, run2repetition(setdiff(a.runs, OrderedSet([o])), n))
 
 replace!(xs::OrderedSet{POI}, o::POI, n::POI) = OrderedSet{POI}(x == o ? n : x for x in xs)
 replace!(xs::Set{Tuple{POI, Repetition}}, o::POI, n::POI) = Set{Tuple{POI, Repetition}}(first(x) == o ? (n, last(x)) : x for x in xs)
 function replace!(a::Association, o::POI, n::POI)
+    o == n && return a
     pois = replace!(a.pois, o, n)
-    associations = replace!(a.associations, o, n)
     empty!(a.pois)
     push!(a.pois, pois...)
+    isempty(a.associations) && return a 
+    associations = replace!(a.associations, o, n)
     empty!(a.associations)
     push!(a.associations, associations...)
     return a
@@ -182,7 +187,7 @@ function save(folder::String, x::Set{VideoFile})
     for (i, v) in enumerate(x)
         a[i + 1, :] .= [v.file, string(v.datetime)]
     end
-    writecsv(file, a, quotes = true)
+    writecsv(file, a)
 end
 
 function save(folder::String, x::OrderedSet{POI}) 
@@ -194,7 +199,7 @@ function save(folder::String, x::OrderedSet{POI})
         a[i + 1, :] .= [t.name, t.start.file, string(t.start.time.value), t.stop.file, string(t.stop.time.value), t.label, t.comment]
     end
     a .= strip.(a)
-    writecsv(file, a, quotes = true)
+    writecsv(file, a)
 end
 
 function save(folder::String, x::OrderedSet{Repetition})
@@ -213,7 +218,7 @@ function save(folder::String, x::OrderedSet{Repetition})
         a[i + 1, end] = string(r.repetition)
     end
     a .= strip.(a)
-    writecsv(file, a, quotes = true)
+    writecsv(file, a)
 end
 
 function save(folder::String, a::Association)
@@ -281,7 +286,7 @@ function loadPOIs(folder::String)::OrderedSet{POI}
         nrow, ncol = size(a)
         @assert ncol == 7
         for i = 1:nrow
-            tg = POI(a[i, 1], Point(a[i, 2], Dates.Second(parse(Int, a[i, 3]))), Point(a[i, 4], Dates.Second(parse(Int, a[i, 5]))), a[i, 6], a[i, 7])
+            tg = POI(a[i, 1], Point(a[i, 2], Second(parse(Int, a[i, 3]))), Point(a[i, 4], Second(parse(Int, a[i, 5]))), a[i, 6], a[i, 7])
             @assert !(tg in tgs)
             push!(tgs, tg)
         end

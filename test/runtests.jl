@@ -1,16 +1,34 @@
 using Associations, DataStructures
 using Base.Test
+# make up some test data
+N = 10
 chars = []
-a = """!"#¤%&/()=?*_:;><,.-'§½`'äöåÄÖÅ\\\n \t\b"""
+#a = """!"#¤%&/()=?*_:;><,.-'§½`'äöåÄÖÅ"""
+a = """!"¤%&/()=?*_:;><,.-'§½`'äöåÄÖÅ"""
 for i in a
     push!(chars, i)
 end
-getstring(n = 1000) = join(rand(chars, n))
+#push!(chars, '\\')
+#push!(chars, '\n')
+#push!(chars, '\t')
+#push!(chars, '\b')
+getstring() = join(rand(chars, N))
+getnice() = join(rand('a':'z', N))
+folder = joinpath(tempdir(), tempname())
+mkpath(folder)
+mkdir(joinpath(folder, "metadata"))
+pois = Set(getnice() for i = 1:N)
+writecsv(joinpath(folder, "metadata", "poi.csv"), reshape(collect(keys(pois.dict)), (1,N)))
+runs = Dict(getnice() => Set(getnice() for i = 1:rand(1:N)) for j = 1:N)
+open(joinpath(folder, "metadata", "run.csv"), "w") do o
+    for (k, v) in runs
+        join(o, [k, v...], ",")
+        print(o, '\n')
+    end
+end
 
 # some base variables
 videofolder = "videofolder"
-
-videofiles = getVideoFiles(videofolder)
 
 @testset "VideoFile" begin 
     files = Dict("a.mp4" => VideoFile("a.mp4",DateTime("2017-02-28T16:04:47")), "b.mp4" => VideoFile("b.mp4",DateTime("2017-03-02T15:38:25")))
@@ -145,8 +163,7 @@ end
 end
 
 @testset "Load & save" begin
-    folder = joinpath(tempdir(), tempname())
-    mkpath(folder)
+
     @testset "VideoFiles" begin
         va = VideoFile("a.mp4",DateTime("2017-02-28T16:04:47"))
         vb = VideoFile("b.mp4",DateTime("2017-03-02T15:38:25"))
@@ -178,19 +195,17 @@ end
     @testset "Association" begin
 
         a = Association()
-        d = Dict(Symbol(join(rand('a':'z', 10))) => getstring(i) for i = 1:100:1000)
-        r(comment) = Run(d, comment)
-        for i = 1:10
-            push!(a, r(string(i)))
+        ps = rand(collect(keys(pois.dict)), N)
+        for i = 1:N
+            r = Dict(Symbol(k) => rand(v) for (k,v) in runs)
+            push!(a, Run(r, getstring()))
         end
-        for i = 1:13
-            push!(a, POI(name = string(i)))
+        for p in ps
+            push!(a, POI(name = p))
         end
-        push!(a, POI(getstring(), Point(getstring(), Dates.Second(abs(rand(Int)))), Point(getstring(), Dates.Second(abs(rand(Int)))), getstring(), getstring(), rand(Bool)))
-        for rep = 1:7, poi = 1:10
-            push!(a, (POI(name = string(poi)), Repetition(r(string(rep)), rep)))
+        for p in rand(collect(keys(a.pois.dict)), N), r in rand(collect(keys(a.runs.dict)), N)
+            push!(a, (p, r))
         end
-
         save(folder, a)
 
         @test a == loadAssociation(folder)
