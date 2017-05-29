@@ -107,6 +107,7 @@ function push!(a::Association, x::Tuple{POI, Repetition})
     @assert first(x) in a.pois
     @assert last(x) in a.runs
     push!(a.associations, x)
+    return a
 end
 
 
@@ -178,13 +179,13 @@ function prep_file(folder::String, what::String)::String
     return joinpath(folder, "$what.csv")
 end
 
-function save(folder::String, x::Set{VideoFile})
+function save(folder::String, x::Dict{String, VideoFile})
     file = prep_file(folder, "files")
     #isempty(x) && rm(file, force=true)
     n = length(x)
     a = Matrix{String}(n + 1,2)
     a[1,:] .= ["file", "date and time"]
-    for (i, v) in enumerate(x)
+    for (i, v) in enumerate(values(x))
         a[i + 1, :] .= [v.file, string(v.datetime)]
     end
     writecsv(file, a)
@@ -261,17 +262,17 @@ end=#
 
 # loads
 
-function loadVideoFiles(folder::String)::Set{VideoFile}
+function loadVideoFiles(folder::String)::Dict{String, VideoFile}
     filescsv = joinpath(folder, "log", "files.csv")
-    vfs = Set{VideoFile}()
-    if isfile(filescsv) 
+    vfs = Dict{String, VideoFile}()
+    if isfile(filescsv)
         a, _ = readcsv(filescsv, String, header = true, quotes = true)
         a .= strip.(a)
         nrow, ncol = size(a)
         for i = 1:nrow
             vf = VideoFile(a[i, 1], DateTime(a[i, 2]))
-            @assert !(vf in vfs)
-            push!(vfs, vf)
+            @assert !haskey(vfs, vf.file)
+            vfs[vf.file] = vf
         end
     end
     return vfs
