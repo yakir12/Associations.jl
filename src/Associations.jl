@@ -173,14 +173,14 @@ function delete!(a::Association, r::Repetition)
 end
 
 function delete!(a::Association, p::POI)
-    p in a return a
+    p in a || return a
     delete!(a.pois, p)
     filter!(x -> first(x) != p, a.associations)
     return a
 end
 
 function delete!(a::Association, x::Tuple{POI, Repetition})
-    x in a return a
+    x in a || return a
     @assert first(x) in a.pois
     @assert last(x) in a.runs
     delete!(a.associations, x)

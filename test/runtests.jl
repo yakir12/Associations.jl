@@ -90,12 +90,12 @@ end
 
     replace!(A, P1, P3)
 
-    @test !(P1 in A.pois) && P3 in A.pois
+    @test !(P1 in A) && P3 in A
     @test !(P1 in map(first, A.associations)) && P3 in map(first, A.associations)
 
     replace!(A, Repetition(R1, 1), R2)
 
-    @test !(Repetition(R1, 1) in A.runs) && Repetition(R2, 4) in A.runs
+    @test !(Repetition(R1, 1) in A) && Repetition(R2, 4) in A
     @test !(Repetition(R1, 1) in map(last, A.associations)) && Repetition(R2, 4) in map(last, A.associations)
 
 end
@@ -109,7 +109,7 @@ end
 
     delete!(A, Repetition(R3, 3))
 
-    @test !(Repetition(R3, 3) in A.runs) && length(A.runs) == 3
+    @test !(Repetition(R3, 3) in A) && length(A.runs) == 3
     @test !(Repetition(R3, 3) in map(last, A.associations))
 
     B = deepcopy(A)
@@ -117,13 +117,13 @@ end
 
     @test A == B
 
-    k = (P1, Repetition(R1, 1))
+    k = (P2, Repetition(R2, 1))
 
-    @test k in A.associations
+    @test k in A
 
     delete!(A, k)
 
-    @test !(k in A.associations)
+    @test !(k in A)
 
 end
 
