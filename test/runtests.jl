@@ -29,13 +29,13 @@ R2 = Run(Dict(:a => "b", :b => "c", :c => "b"), "a comment")
 R3 = Run(Dict(:a => "b", :b => "c", :c => "b"), "this is comment of a replicate")
 R4 = Run(Dict(:a => "q", :b => "c", :c => "b"), "bla")
 
+target_vfs = Dict("a.mp4" => VideoFile("a.mp4",DateTime("2017-02-28T16:04:47")), "b.mp4" => VideoFile("b.mp4",DateTime("2017-03-02T15:38:25")))
 
 @testset "VideoFile" begin 
 
-    target = Dict("a.mp4" => VideoFile("a.mp4",DateTime("2017-02-28T16:04:47")), "b.mp4" => VideoFile("b.mp4",DateTime("2017-03-02T15:38:25")))
     fs = getVideoFiles(videofolder)
     vf = Dict(f => VideoFile(videofolder, f) for f in fs)
-    @test vf == target
+    @test vf == target_vfs
 
 end
 
@@ -44,12 +44,12 @@ end
 end
 
 @testset "POI" begin
-    @test POI(name = "a") == POI("a", Point("", 0, 0, 0), Point("", 0, 0, 0), "", "", true)
+    @test POI(name = "a") == POI("a", Point("", 0, 0, 0), Point("", 0, 0, 0), "", "")
     @test_throws AssertionError POI("name1", Point("file1.mp4", Second(1)), Point("file1.mp4", Second(0)), "label", "comment")
 end
 
 @testset "Run" begin
-    @test Run(comment = "a") == Run(Dict{Symbol, String}(), "a", true)
+    @test Run(comment = "a") == Run(Dict{Symbol, String}(), "a")
 end
 
 @testset "push!" begin
@@ -117,9 +117,22 @@ end
 
     @test A == B
 
+    k = (P1, Repetition(R1, 1))
+
+    @test k in A.associations
+
+    delete!(A, k)
+
+    @test !(k in A.associations)
+
 end
 
 @testset "Load & save" begin
+
+    save(folder, target_vfs)
+    vfs = loadVideoFiles(folder)
+
+    @test target_vfs == vfs
 
     save(folder, A)
 

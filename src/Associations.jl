@@ -3,9 +3,9 @@ module Associations
 
 using DataStructures, AutoHashEquals, Base.Dates
 
-import Base: push!, empty!, delete!, isempty
+import Base: push!, empty!, delete!, isempty, ==, in
 
-export VideoFile, Point, POI, Run, Repetition, Association, getVideoFiles, loadVideoFiles, loadPOIs, loadRuns, loadAssociation, save, push!, empty!, delete!, isempty, replace!
+export VideoFile, Point, POI, Run, Repetition, Association, getVideoFiles, loadVideoFiles, loadPOIs, loadRuns, loadAssociation, save, push!, empty!, delete!, isempty, replace!, in
 
 exiftool_base = joinpath(Pkg.dir("Associations"), "deps", "src", "exiftool", "exiftool")
 const exiftool = exiftool_base*(is_windows() ? ".exe" : "")
@@ -58,15 +58,12 @@ Point(f::String, h::Int, m::Int, s::Int) = Point(f, sum(Second.([Hour(h), Minute
     stop::Point
     label::String
     comment::String
-    visible::Bool
 
-    function POI(name, start, stop, label, comment, visible)
+    function POI(name, start, stop, label, comment)
         @assert start.file != stop.file || start.time <= stop.time
-        new(name, start, stop, label, comment, visible)
+        new(name, start, stop, label, comment)
     end
 end
-
-POI(name, start, stop, label, comment) = POI(name, start, stop, label, comment, true)
 
 POI(;name = "", start = Point(), stop = Point(), label = "", comment = "") = POI(name, start, stop, label, comment)
 
@@ -74,10 +71,8 @@ POI(;name = "", start = Point(), stop = Point(), label = "", comment = "") = POI
 @auto_hash_equals immutable Run
     metadata::Dict{Symbol, String}
     comment::String
-    visible::Bool
 end
 
-Run(metadata, comment) = Run(metadata, comment, true)
 Run(;metadata = Dict{Symbol, String}(), comment = "") = Run(metadata, comment)
 
 @auto_hash_equals immutable Repetition
@@ -93,10 +88,19 @@ end
 
 Association() = Association(OrderedSet{POI}(), OrderedSet{Repetition}(), Set{Tuple{POI, Repetition}}())
 
+# in
+
+in(x::POI, a::Association) = x in a.pois
+in(x::Repetition, a::Association) = x in a.runs
+in(x::Tuple{POI, Repetition}, a::Association) = x in a.associations
+
+# equal keys
+==(a::Base.KeyIterator, b::Base.KeyIterator) = length(a)==length(b) && all(k->in(k,b), a)
+
 # pushes
 
 function run2repetition(xs::OrderedSet{Repetition}, r::Run)
-    isempty(xs) || @assert collect(keys(last(xs).run.metadata)) == collect(keys(r.metadata))
+    isempty(xs) || @assert keys(last(xs).run.metadata) == keys(r.metadata)
     Repetition(r, reduce((x, y) -> max(x, y.run.metadata == r.metadata ? y.repetition : 0), 0, xs) + 1)
 end
 
@@ -126,8 +130,8 @@ replace(xs::OrderedSet{Repetition}, o::Repetition, n::Repetition) = OrderedSet{R
 replace(xs::Set{Tuple{POI, Repetition}}, o::Repetition, n::Repetition) = Set{Tuple{POI, Repetition}}(last(x) == o ? (first(x), n) : x for x in xs)
 function replace!(a::Association, o::Repetition, n::Repetition)
     o == n && return a
-    @assert o in a.runs
-    @assert collect(keys(last(a.runs).run.metadata)) == collect(keys(o.run.metadata)) == collect(keys(n.run.metadata))
+    @assert o in a
+    @assert keys(last(a.runs).run.metadata) == keys(o.run.metadata) == keys(n.run.metadata)
     runs = replace(a.runs, o, n)
     empty!(a.runs)
     push!(a.runs, runs...)
@@ -143,7 +147,7 @@ replace!(xs::OrderedSet{POI}, o::POI, n::POI) = OrderedSet{POI}(x == o ? n : x f
 replace!(xs::Set{Tuple{POI, Repetition}}, o::POI, n::POI) = Set{Tuple{POI, Repetition}}(first(x) == o ? (n, last(x)) : x for x in xs)
 function replace!(a::Association, o::POI, n::POI)
     o == n && return a
-    @assert o in a.pois
+    @assert o in a
     pois = replace!(a.pois, o, n)
     empty!(a.pois)
     push!(a.pois, pois...)
@@ -157,7 +161,7 @@ end
 # deletes
 
 function delete!(a::Association, r::Repetition)
-    r in a.runs || return a
+    r in a || return a
     delete!(a.runs, r)
     filter!(x -> last(x) != r, a.associations)
     for x in a.runs
@@ -169,14 +173,14 @@ function delete!(a::Association, r::Repetition)
 end
 
 function delete!(a::Association, p::POI)
-    p in a.pois || return a
+    p in a return a
     delete!(a.pois, p)
     filter!(x -> first(x) != p, a.associations)
     return a
 end
 
 function delete!(a::Association, x::Tuple{POI, Repetition})
-    x in a.associations || return a
+    x in a return a
     @assert first(x) in a.pois
     @assert last(x) in a.runs
     delete!(a.associations, x)
@@ -217,10 +221,10 @@ end
 
 function save(folder::String, x::OrderedSet{Repetition})
     file = prep_file(folder, "runs")
-    @assert length(unique(map(x -> string(keys(x.run.metadata)), x))) == 1
+    @assert length(unique(map(x -> string(keys(x.run.metadata)), x))) == 1 # fix this so you can use the new ==
     ks = sort(collect(keys(x[1].run.metadata)))
     header = string.(ks)
-    push!(header, "comment", "repetition")
+    push!(header, "Comment", "Repetition")
     n = length(x)
     a = Matrix{String}(n + 1, length(header))
     a[1,:] .= header
@@ -248,30 +252,6 @@ function save(folder::String, a::Association)
         end
     end
 end
-# edit comment
-
-#=function edit_comment!(a::Association, x::Repetition, c::String)
-    x.run.comment == c && return a
-    new = OrderedSet{Repetition}()
-    for xi in a.runs
-        if xi == x
-            n = Repetition(Run(x.run.metadata, c), x.repetition)
-            push!(new, n)
-            for ai in a.associations
-                if last(ai) == x
-                    push!(a.associations, (first(ai), n))
-                    delete!(a.associations, ai)
-                end
-            end
-        else
-            push!(new, xi)
-        end
-    end
-    empty!(a.runs)
-    push!(a.runs, new...)
-    return a
-end=#
-
 
 # loads
 
