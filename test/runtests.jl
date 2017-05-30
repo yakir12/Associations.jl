@@ -1,4 +1,4 @@
-using Associations, DataStructures, Faker
+using Associations, DataStructures
 using Base.Test, Base.Dates
 
 # some base variables
