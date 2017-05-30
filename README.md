@@ -5,6 +5,8 @@
 
 [![codecov.io](http://codecov.io/github/yakir12/Associations.jl/coverage.svg?branch=master)](http://codecov.io/github/yakir12/Associations.jl?branch=master)
 
+[![Coverage Status](https://coveralls.io/repos/github/yakir12/Associations.jl/badge.svg?branch=master)](https://coveralls.io/github/yakir12/Associations.jl?branch=master)
+
 ## How to install
 1. If you haven't already, install [Julia v0.6 (Release Candidates)](https://julialang.org/downloads/) -> you should be able to launch it (some icon on the Desktop or some such)
 2. Start Julia -> a Julia-terminal popped up
