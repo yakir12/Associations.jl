@@ -32,7 +32,7 @@ end
 
 function getVideoFiles(folder::String)
     #old = uploadsavedVideoFiles(folder)
-    new = String[]
+    new = Set{String}()
     for (root, dir, files) in walkdir(folder)
         for file in files
             file[1] == '.' && continue
@@ -59,11 +59,17 @@ Point(f::String, h::Int, m::Int, s::Int) = Point(f, sum(Second.([Hour(h), Minute
     label::String
     comment::String
     visible::Bool
+
+    function POI(name, start, stop, label, comment, visible)
+        @assert start.file != stop.file || start.time <= stop.time
+        new(name, start, stop, label, comment, visible)
+    end
 end
 
 POI(name, start, stop, label, comment) = POI(name, start, stop, label, comment, true)
 
 POI(;name = "", start = Point(), stop = Point(), label = "", comment = "") = POI(name, start, stop, label, comment)
+
 
 @auto_hash_equals immutable Run
     metadata::Dict{Symbol, String}
@@ -89,7 +95,10 @@ Association() = Association(OrderedSet{POI}(), OrderedSet{Repetition}(), Set{Tup
 
 # pushes
 
-run2repetition(xs::OrderedSet{Repetition}, r::Run) = Repetition(r, reduce((x, y) -> max(x, y.run.metadata == r.metadata ? y.repetition : 0), 0, xs) + 1)
+function run2repetition(xs::OrderedSet{Repetition}, r::Run)
+    isempty(xs) || @assert collect(keys(last(xs).run.metadata)) == collect(keys(r.metadata))
+    Repetition(r, reduce((x, y) -> max(x, y.run.metadata == r.metadata ? y.repetition : 0), 0, xs) + 1)
+end
 
 push!(xs::OrderedSet{Repetition}, r::Run) = push!(xs, run2repetition(xs, r))
 
@@ -113,15 +122,17 @@ end
 
 # replace
 
-replace!(xs::OrderedSet{Repetition}, o::Repetition, n::Repetition) = OrderedSet{Repetition}(x == o ? n : x for x in xs)
-replace!(xs::Set{Tuple{POI, Repetition}}, o::Repetition, n::Repetition) = Set{Tuple{POI, Repetition}}(last(x) == o ? (first(x), n) : x for x in xs)
+replace(xs::OrderedSet{Repetition}, o::Repetition, n::Repetition) = OrderedSet{Repetition}(x == o ? n : x for x in xs)
+replace(xs::Set{Tuple{POI, Repetition}}, o::Repetition, n::Repetition) = Set{Tuple{POI, Repetition}}(last(x) == o ? (first(x), n) : x for x in xs)
 function replace!(a::Association, o::Repetition, n::Repetition)
     o == n && return a
-    runs = replace!(a.runs, o, n)
+    @assert o in a.runs
+    @assert collect(keys(last(a.runs).run.metadata)) == collect(keys(o.run.metadata)) == collect(keys(n.run.metadata))
+    runs = replace(a.runs, o, n)
     empty!(a.runs)
     push!(a.runs, runs...)
     isempty(a.associations) && return a 
-    associations = replace!(a.associations, o, n)
+    associations = replace(a.associations, o, n)
     empty!(a.associations)
     push!(a.associations, associations...)
     return a
@@ -132,6 +143,7 @@ replace!(xs::OrderedSet{POI}, o::POI, n::POI) = OrderedSet{POI}(x == o ? n : x f
 replace!(xs::Set{Tuple{POI, Repetition}}, o::POI, n::POI) = Set{Tuple{POI, Repetition}}(first(x) == o ? (n, last(x)) : x for x in xs)
 function replace!(a::Association, o::POI, n::POI)
     o == n && return a
+    @assert o in a.pois
     pois = replace!(a.pois, o, n)
     empty!(a.pois)
     push!(a.pois, pois...)
@@ -205,6 +217,7 @@ end
 
 function save(folder::String, x::OrderedSet{Repetition})
     file = prep_file(folder, "runs")
+    @assert length(unique(map(x -> string(keys(x.run.metadata)), x))) == 1
     ks = sort(collect(keys(x[1].run.metadata)))
     header = string.(ks)
     push!(header, "comment", "repetition")
@@ -295,13 +308,32 @@ function loadPOIs(folder::String)::OrderedSet{POI}
     return tgs
 end
 
+function getmetadata(folder)
+    metadata = Dict{Symbol, String}()
+    file = joinpath(folder, "metadata", "run.csv")
+    if isfile(file)
+        b = readcsv(file)
+        for i = 1:size(b,1)
+            metadata[Symbol(strip(b[i, 1]))] = length(b[i,:]) < 2 ? "" : strip(b[i, 2])
+        end
+    end
+    return metadata
+end
+
 function loadRuns(folder::String)::OrderedSet{Repetition}
     filescsv = joinpath(folder, "log", "runs.csv")
     rs = OrderedSet{Repetition}()
     if isfile(filescsv) 
         a, ks = readcsv(filescsv, String, header = true, quotes = true)
-        ks = Symbol.(strip.(ks))
+        ks = Symbol.(strip.(vec(ks)))
         a .= strip.(a)
+        metadata = getmetadata(folder)
+        for (k, v) in metadata
+            if !(k in ks)
+                unshift!(ks, k)
+                a = [repmat([v], size(a, 1)) a]
+            end
+        end
         nks = length(ks)
         nrow, ncol = size(a)
         @assert nks == ncol > 2
