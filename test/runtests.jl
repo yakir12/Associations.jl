@@ -6,8 +6,8 @@ videofolder = joinpath(Pkg.dir("Associations"), "test", "videofolder")
 
 # make up some test data
 
-folder = tempname()
-mkpath(joinpath(folder, "metadata"))
+folder = mktempdir()
+mkdir(joinpath(folder, "metadata"))
 pois = Set(["name1", "name2", "name3"])
 writecsv(joinpath(folder, "metadata", "poi.csv"), reshape(collect(keys(pois.dict)), (1,3)))
 runs = Dict("a" => ["a", "b", "q"], "b" => ["a", "c"], "c" => ["b"])
