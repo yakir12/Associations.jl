@@ -3,12 +3,10 @@
 
 [![Build Status](https://travis-ci.org/yakir12/Associations.jl.svg?branch=master)](https://travis-ci.org/yakir12/Associations.jl) [![Build status](https://ci.appveyor.com/api/projects/status/x6gx5vx5chjhchl7?svg=true)](https://ci.appveyor.com/project/yakir12/associations-jl)
 
-[![codecov.io](http://codecov.io/github/yakir12/Associations.jl/coverage.svg?branch=master)](http://codecov.io/github/yakir12/Associations.jl?branch=master)
-
-[![Coverage Status](https://coveralls.io/repos/github/yakir12/Associations.jl/badge.svg?branch=master)](https://coveralls.io/github/yakir12/Associations.jl?branch=master)
+[![codecov.io](http://codecov.io/github/yakir12/Associations.jl/coverage.svg?branch=master)](http://codecov.io/github/yakir12/Associations.jl?branch=master) [![Coverage Status](https://coveralls.io/repos/github/yakir12/Associations.jl/badge.svg?branch=master)](https://coveralls.io/github/yakir12/Associations.jl?branch=master)
 
 ## How to install
-1. If you haven't already, install [Julia v0.6 (Release Candidates)](https://julialang.org/downloads/) -> you should be able to launch it (some icon on the Desktop or some such)
+1. If you haven't already, install [Julia](https://julialang.org/downloads/) -> you should be able to launch it (some icon on the Desktop or some such)
 2. Start Julia -> a Julia-terminal popped up
 3. Copy: `Pkg.clone("git://github.com/yakir12/Associations.jl.git"); Pkg.build("Associations")` and paste it in the newly opened Julia-terminal, press Enter
 4. (*not necessary*) To test the package, copy: `Pkg.test("Associations")` and paste it in the Julia-terminal. Press enter to check if all the tests pass.
