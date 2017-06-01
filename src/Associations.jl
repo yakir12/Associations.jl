@@ -221,7 +221,9 @@ end
 
 function save(folder::String, x::OrderedSet{Repetition})
     file = prep_file(folder, "runs")
-    @assert length(unique(map(x -> string(keys(x.run.metadata)), x))) == 1 # fix this so you can use the new ==
+    #@assert length(unique(map(x -> string(keys(x.run.metadata)), x))) == 1 # fix this so you can use the new ==
+    #map(x -> println(keys(x.run.metadata)), x)
+    #@assert reduce(==, map(x -> keys(x.run.metadata), x))
     ks = sort(collect(keys(x[1].run.metadata)))
     header = string.(ks)
     push!(header, "Comment", "Repetition")
