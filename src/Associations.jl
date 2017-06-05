@@ -126,22 +126,93 @@ end
 
 # replace
 
-replace(xs::OrderedSet{Repetition}, o::Repetition, n::Repetition) = OrderedSet{Repetition}(x == o ? n : x for x in xs)
-replace(xs::Set{Tuple{POI, Repetition}}, o::Repetition, n::Repetition) = Set{Tuple{POI, Repetition}}(last(x) == o ? (first(x), n) : x for x in xs)
-function replace!(a::Association, o::Repetition, n::Repetition)
-    o == n && return a
+## runs
+
+function replace!(a::Association, o::Repetition, n::Run)
     @assert o in a
-    @assert keys(last(a.runs).run.metadata) == keys(o.run.metadata) == keys(n.run.metadata)
-    runs = replace(a.runs, o, n)
+    @assert keys(last(a.runs).run.metadata) == keys(o.run.metadata) == keys(n.metadata)
+
+    runs = OrderedSet{Repetition}()
+    associations = Set{Tuple{POI, Repetition}}()
+    for r1 in a.runs
+        if r1 == o
+            push!(runs, n)
+        else
+            push!(runs, r1.run)
+        end
+        r2 = last(runs)
+        for (p, r) in a.associations
+            if r1 == r
+                push!(associations, (p, r2))
+            end
+        end
+    end
+
     empty!(a.runs)
     push!(a.runs, runs...)
-    isempty(a.associations) && return a 
-    associations = replace(a.associations, o, n)
+    isempty(associations) && return a 
     empty!(a.associations)
     push!(a.associations, associations...)
     return a
 end
-replace!(a::Association, o::Repetition, n::Run) = replace!(a, o, run2repetition(setdiff(a.runs, OrderedSet([o])), n))
+
+
+
+#=replace_comment(xs::OrderedSet{Repetition}, o::Repetition, n::Repetition) = OrderedSet{Repetition}(x == o ? n : x for x in xs)
+function replace(xs::OrderedSet{Repetition}, o::Repetition, n::Repetition)
+    runs = OrderedSet{Repetition}()
+    for r in xs
+        if r.run.metadata == o.run.metadata
+            if r.repetition < o.repetition
+                push!(runs, r)
+            elseif r.repetition == o.repetition
+                push!(runs, n)
+            else
+                push!(runs, Repetition(r.run, r.repetition - 1))
+            end
+        else
+            push!(runs, r)
+        end
+    end
+    return runs
+end
+replace_comment(xs::Set{Tuple{POI, Repetition}}, o::Repetition, n::Repetition) = Set{Tuple{POI, Repetition}}(last(x) == o ? (first(x), n) : x for x in xs)
+function replace(xs::Set{Tuple{POI, Repetition}}, o::Repetition, n::Repetition)
+    associations = Set{Tuple{POI, Repetition}}()
+    for a in xs
+        if last(a).run.metadata == o.run.metadata
+            if last(a).repetition < o.repetition
+                push!(associations, a)
+            elseif last(a).repetition == o.repetition
+                push!(associations, (first(a), n))
+            else
+                push!(associations, (first(a), Repetition(a.run, a.repetition - 1)))
+            end
+        else
+            push!(associations, a)
+        end
+    end
+    return associations
+end
+function replace!(a::Association, o::Repetition, n::Repetition)
+    o == n && return a
+    @assert o in a
+    @assert keys(last(a.runs).run.metadata) == keys(o.run.metadata) == keys(n.run.metadata)
+    only_comment = o.repetition == n.repetition && o.run.metadata == n.run.metadata
+    runs = only_comment ? replace_comment(a.runs, o, n) : replace(a.runs, o, n)
+    empty!(a.runs)
+    push!(a.runs, runs...)
+    isempty(a.associations) && return a 
+    associations = only_comment ? replace_comment(a.associations, o, n) : replace(a.associations, o, n)
+    empty!(a.associations)
+    push!(a.associations, associations...)
+    return a
+end
+replace!(a::Association, o::Repetition, n::Run) = replace!(a, o, run2repetition(setdiff(a.runs, OrderedSet([o])), n))=#
+
+
+
+## pois
 
 replace!(xs::OrderedSet{POI}, o::POI, n::POI) = OrderedSet{POI}(x == o ? n : x for x in xs)
 replace!(xs::Set{Tuple{POI, Repetition}}, o::POI, n::POI) = Set{Tuple{POI, Repetition}}(first(x) == o ? (n, last(x)) : x for x in xs)
@@ -166,7 +237,7 @@ function delete!(a::Association, r::Repetition)
     filter!(x -> last(x) != r, a.associations)
     for x in a.runs
         if x.run.metadata == r.run.metadata && x.repetition > r.repetition
-            replace!(a, x, Repetition(x.run, x.repetition - 1))
+            replace!(a, x, x.run)
         end
     end
     return a

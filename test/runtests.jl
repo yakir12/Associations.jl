@@ -92,10 +92,22 @@ end
     @test !(P1 in A) && P3 in A
     @test !(P1 in map(first, A.associations)) && P3 in map(first, A.associations)
 
-    replace!(A, Repetition(R1, 1), R2)
+    replace!(A, Repetition(R3, 2), R1)
 
-    @test !(Repetition(R1, 1) in A) && Repetition(R2, 4) in A
-    @test !(Repetition(R1, 1) in map(last, A.associations)) && Repetition(R2, 4) in map(last, A.associations)
+    B = Association()
+    push!(B, P1)
+    push!(B, P2)
+    push!(B, P1)
+    push!(B, R1)
+    push!(B, R2)
+    push!(B, R1)
+    push!(B, R3)
+    push!(B, (P1, Repetition(R1, 1)))
+    push!(B, (P1, Repetition(R1, 1)))
+    push!(B, (P2, Repetition(R2, 1)))
+    push!(B, (P2, Repetition(R1, 2)))
+
+    @test A.runs == B.runs
 
 end
 
@@ -106,13 +118,13 @@ end
     @test A.pois == OrderedSet{POI}([P2])
     @test !(P3 in map(first, A.associations))
 
-    delete!(A, Repetition(R3, 3))
+    delete!(A, Repetition(R3, 2))
 
-    @test !(Repetition(R3, 3) in A) && length(A.runs) == 3
-    @test !(Repetition(R3, 3) in map(last, A.associations))
+    @test !(Repetition(R3, 2) in A) && length(A.runs) == 3
+    @test !(Repetition(R3, 2) in map(last, A.associations))
 
     B = deepcopy(A)
-    delete!(A, Repetition(R3, 3))
+    delete!(A, Repetition(R3, 2))
 
     @test A == B
 

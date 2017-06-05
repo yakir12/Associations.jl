@@ -1,0 +1,4 @@
+remove the stuff you don't need from the export, maybe rename some things | id:6694692baf612c031adf3e9a4c39c0df30feb606
+fix the assertion that all keys are the same in the whole repetitions Set | id:708fff4b1e4cbe8cb7120290ada4753db030a6f7
+prevent user from adding more pois/runs while a poi/run dialog is open | id:9902bcc1f7bdb8f63af6fde59d6583dd8b67580d
+increase the difficulty of the test with the special charachters and symbols | id:d5f7b46d8794862f2ebc098983b65988639cfdf5
