@@ -291,11 +291,10 @@ function save(folder::String, x::OrderedSet{POI})
 end
 
 function save(folder::String, x::OrderedSet{Repetition})
+    ks = keys(first(x).run.metadata)
+    @assert reduce((x, y) -> x && keys(y.run.metadata) == ks, true, x)
     file = prep_file(folder, "runs")
-    #@assert length(unique(map(x -> string(keys(x.run.metadata)), x))) == 1 # fix this so you can use the new ==
-    #map(x -> println(keys(x.run.metadata)), x)
-    #@assert reduce(==, map(x -> keys(x.run.metadata), x))
-    ks = sort(collect(keys(x[1].run.metadata)))
+    ks = sort(collect(ks))
     header = string.(ks)
     push!(header, "Comment", "Repetition")
     n = length(x)

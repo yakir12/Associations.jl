@@ -2,6 +2,7 @@ add a main function that takes in the initial gui and the video in one | id:0190
 separate the gui from the Associations module so that testing can be complete and faster | id:157023557653993dc5362b80568b0bab09347679
 check the versioning of everything | id:23a4c4375d57cc821729b4858c569b32ded06f4e
 see how I can improve my tests unittest | id:50f7df0365b393610c6ed3185c5fd788dd4fa086
+fix the assertion that all keys are the same in the whole repetitions Set | id:708fff4b1e4cbe8cb7120290ada4753db030a6f7
 maybe standardize the test so that you have set study cases | id:79b3ea69ed055744e2a59059314cd41d8eddcd00
 check the coverage | id:a15c8448ade0bd4565511d4f903ff84d2e3e7088
 think about restructuring the runs so that it works mor like a dict, the keys for the POIs are the same across the whole Association | id:a3e7ffaad39c0c461ddb55b7dca904ad77762133
