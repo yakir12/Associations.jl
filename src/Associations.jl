@@ -5,7 +5,7 @@ using DataStructures, AutoHashEquals, Base.Dates
 
 import Base: push!, empty!, delete!, isempty, ==, in
 
-export VideoFile, Point, POI, Run, Repetition, Association, getVideoFiles, loadVideoFiles, loadPOIs, loadRuns, loadAssociation, save, push!, empty!, delete!, isempty, replace!, in
+export VideoFile, Point, POI, Run, Repetition, Association, loadLogVideoFiles, findVideoFiles, getVideoFiles, loadPOIs, loadRuns, loadAssociation, save, push!, empty!, delete!, isempty, replace!, in
 
 exiftool_base = joinpath(Pkg.dir("Associations"), "deps", "src", "exiftool", "exiftool")
 const exiftool = exiftool_base*(is_windows() ? ".exe" : "")
@@ -17,7 +17,7 @@ const exts = [".webm", ".mkv", ".flv", ".flv", ".vob", ".ogv", ".ogg", ".drc", "
     datetime::DateTime
 end
 
-function VideoFile(folder::String, file::String)
+function getDateTime(folder::String, file::String)::DateTime
     fullfile = joinpath(folder, file)
     dateTimeOriginal, createDate, modifyDate = strip.(split(readstring(`$exiftool -T -AllDates -n $fullfile`), '\t'))
     #duration_, dateTimeOriginal, createDate, modifyDate  = ("-", "-", "-", "-")
@@ -27,10 +27,10 @@ function VideoFile(folder::String, file::String)
         isempty(m) && continue
         datetime = min(datetime, DateTime(m[1], "yyyy:mm:dd HH:MM:SS"))
     end
-    VideoFile(file, datetime)
+    return datetime
 end
 
-function getVideoFiles(folder::String)
+#=function getVideoFiles(folder::String)
     #old = uploadsavedVideoFiles(folder)
     new = Set{String}()
     for (root, dir, files) in walkdir(folder)
@@ -42,7 +42,7 @@ function getVideoFiles(folder::String)
         end
     end
     return new
-end
+end=#
 
 @auto_hash_equals immutable Point
     file::String
@@ -266,13 +266,13 @@ function prep_file(folder::String, what::String)::String
     return joinpath(folder, "$what.csv")
 end
 
-function save(folder::String, x::Dict{String, VideoFile})
+function save(folder::String, x::Set{VideoFile})
     file = prep_file(folder, "files")
     #isempty(x) && rm(file, force=true)
     n = length(x)
     a = Matrix{String}(n + 1,2)
     a[1,:] .= ["file", "date and time"]
-    for (i, v) in enumerate(values(x))
+    for (i, v) in enumerate(x)
         a[i + 1, :] .= [v.file, string(v.datetime)]
     end
     writecsv(file, a)
@@ -327,21 +327,42 @@ end
 
 # loads
 
-function loadVideoFiles(folder::String)::Dict{String, VideoFile}
+function loadLogVideoFiles(folder::String)::Dict{String, DateTime}
     filescsv = joinpath(folder, "log", "files.csv")
-    vfs = Dict{String, VideoFile}()
+    vfs = Dict{String, DateTime}()
     if isfile(filescsv)
         a, _ = readcsv(filescsv, String, header = true, quotes = true)
         a .= strip.(a)
+        @assert allunique(a[:,1])
         nrow, ncol = size(a)
+        @assert ncol == 2
         for i = 1:nrow
-            vf = VideoFile(a[i, 1], DateTime(a[i, 2]))
-            @assert !haskey(vfs, vf.file)
-            vfs[vf.file] = vf
+            vfs[a[i, 1]] = DateTime(a[i, 2])
         end
     end
     return vfs
 end
+
+function findVideoFiles!(log::Dict{String, DateTime}, folder::String)
+    for (root, dir, files) in walkdir(folder)
+        for file in files
+            file[1] == '.' && continue
+            last(splitext(file)) in exts || continue
+            fname = relpath(joinpath(root, file), folder)
+            if !haskey(log, fname)
+                log[fname] = getDateTime(folder, fname)
+            end
+        end
+    end
+end
+
+function getVideoFiles(folder::String)::OrderedSet{VideoFile}
+    log = loadLogVideoFiles(folder)
+    findVideoFiles!(log, folder)
+    o = sort([(k, v) for (k, v) in log], by = last)
+    return OrderedSet{VideoFile}(VideoFile(k, v) for (k,v) in o)
+end
+
 
 function loadPOIs(folder::String)::OrderedSet{POI}
     filescsv = joinpath(folder, "log", "pois.csv")
