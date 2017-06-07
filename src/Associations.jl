@@ -266,7 +266,7 @@ function prep_file(folder::String, what::String)::String
     return joinpath(folder, "$what.csv")
 end
 
-function save(folder::String, x::Set{VideoFile})
+function save(folder::String, x::OrderedSet{VideoFile})
     file = prep_file(folder, "files")
     #isempty(x) && rm(file, force=true)
     n = length(x)

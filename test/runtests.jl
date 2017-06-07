@@ -28,13 +28,11 @@ R2 = Run(Dict(:a => "b", :b => "c", :c => "b"), "a comment")
 R3 = Run(Dict(:a => "b", :b => "c", :c => "b"), "this is comment of a replicate")
 R4 = Run(Dict(:a => "q", :b => "c", :c => "b"), "bla")
 
-target_vfs = Dict("a.mp4" => VideoFile("a.mp4",DateTime("2017-02-28T16:04:47")), "b.mp4" => VideoFile("b.mp4",DateTime("2017-03-02T15:38:25")))
+target_vfs = OrderedSet([VideoFile("a.mp4",DateTime("2017-02-28T16:04:47")), VideoFile("b.mp4",DateTime("2017-03-02T15:38:25"))])
 
 @testset "VideoFile" begin 
 
-    fs = getVideoFiles(videofolder)
-    vf = Dict(f => VideoFile(videofolder, f) for f in fs)
-    @test vf == target_vfs
+    @test getVideoFiles(videofolder) == target_vfs
 
 end
 
@@ -141,9 +139,10 @@ end
 @testset "Load & save" begin
 
     save(folder, target_vfs)
-    vfs = loadVideoFiles(folder)
+    vfs = loadLogVideoFiles(folder)
 
-    @test target_vfs == vfs
+    @test length(vfs) == 2
+    @test all(vfs[vf.file] == vf.datetime for vf in target_vfs)
 
     save(folder, A)
 
