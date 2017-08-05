@@ -1,11 +1,11 @@
 __precompile__()
 module Associations
 
-using DataStructures, AutoHashEquals, Base.Dates
+using DataStructures, AutoHashEquals, Base.Dates, UnitfulAngles, DataStructures
 
-import Base: push!, empty!, delete!, isempty, ==, in
+import Base: push!, empty!, delete!, isempty, ==, in, show
 
-export VideoFile, Point, POI, Run, Repetition, Association, loadLogVideoFiles, findVideoFiles, getVideoFiles, loadPOIs, loadRuns, loadAssociation, save, push!, empty!, delete!, isempty, replace!, in
+export VideoFile, Point, POI, Run, Repetition, Association, loadLogVideoFiles, findVideoFiles, getVideoFiles, loadPOIs, loadRuns, loadAssociation, save, push!, empty!, delete!, isempty, replace!, in, report
 
 exiftool_base = joinpath(Pkg.dir("Associations"), "deps", "src", "exiftool", "exiftool")
 const exiftool = exiftool_base*(is_windows() ? ".exe" : "")
@@ -67,6 +67,23 @@ end
 
 POI(;name = "", start = Point(), stop = Point(), label = "", comment = "") = POI(name, start, stop, label, comment)
 
+# time differences
+function duration(poi::POI, folder::String)::Int
+    Δ = poi.stop.time.value - poi.start.time.value
+    poi.start.file == poi.stop.file && return Δ
+    fullfile = joinpath(folder, poi.start.file)
+    t = round(Int, parse(readstring(`$exiftool -T -Duration -n $fullfile`)))
+    return t + Δ
+end
+
+# time of day
+function timeofday(poi::POI, folder::String)
+    filescsv = joinpath(folder, "log", "files.csv")
+    a, _ = readcsv(filescsv, String, header = true, quotes = true, comments = false)
+    for i = 1:size(a,1)
+        strip(a[i, 1]) == poi.start.file && return Time(DateTime(strip(a[i, 2])) + poi.start.time)
+    end
+end
 
 @auto_hash_equals immutable Run
     metadata::Dict{Symbol, String}
@@ -331,7 +348,7 @@ function loadLogVideoFiles(folder::String)::Dict{String, DateTime}
     filescsv = joinpath(folder, "log", "files.csv")
     vfs = Dict{String, DateTime}()
     if isfile(filescsv)
-        a, _ = readcsv(filescsv, String, header = true, quotes = true)
+        a, _ = readcsv(filescsv, String, header = true, quotes = true, comments = false)
         a .= strip.(a)
         @assert allunique(a[:,1])
         nrow, ncol = size(a)
@@ -368,7 +385,7 @@ function loadPOIs(folder::String)::OrderedSet{POI}
     filescsv = joinpath(folder, "log", "pois.csv")
     tgs = OrderedSet{POI}()
     if isfile(filescsv) 
-        a, _ = readcsv(filescsv, String, header = true, quotes = true)
+        a, _ = readcsv(filescsv, String, header = true, quotes = true, comments = false)
         a .= strip.(a)
         nrow, ncol = size(a)
         @assert ncol == 7
@@ -385,7 +402,7 @@ function getmetadata(folder)
     metadata = Dict{Symbol, String}()
     file = joinpath(folder, "metadata", "run.csv")
     if isfile(file)
-        b = readcsv(file)
+        b = readcsv(file, comments = false)
         for i = 1:size(b,1)
             metadata[Symbol(strip(b[i, 1]))] = length(b[i,:]) < 2 ? "" : strip(b[i, 2])
         end
@@ -397,7 +414,7 @@ function loadRuns(folder::String)::OrderedSet{Repetition}
     filescsv = joinpath(folder, "log", "runs.csv")
     rs = OrderedSet{Repetition}()
     if isfile(filescsv) 
-        a, ks = readcsv(filescsv, String, header = true, quotes = true)
+        a, ks = readcsv(filescsv, String, header = true, quotes = true, comments = false)
         ks = Symbol.(strip.(vec(ks)))
         a .= strip.(a)
         metadata = getmetadata(folder)
@@ -431,7 +448,7 @@ function loadAssociation(folder::String)::Association
     filescsv = joinpath(folder, "log", "associations.csv")
     as = Set{Tuple{POI, Repetition}}()
     if isfile(filescsv) 
-        a, ks = readcsv(filescsv, Int, header = true)
+        a, ks = readcsv(filescsv, Int, header = true, comments = false)
         nrow, ncol = size(a)
         @assert ncol == 2
         for i = 1:nrow
@@ -451,5 +468,112 @@ function empty!(a::Association)
 end
 
 isempty(a::Association) = isempty(a.pois) && isempty(a.runs) && isempty(a.associations)
+
+function delete_rempty_metadata!(a::Association)
+    for k in keys(a.runs[1].run.metadata)
+        if all(isempty(r.run.metadata[k]) for r in a.runs)
+            for r in a.runs
+                delete!(r.run.metadata, k)
+            end
+        end
+    end
+end
+
+# report
+
+function table(cur_matrix::Matrix; header_row=[], title=nothing)
+    cur_table = ""
+    if title != nothing
+        cur_table *= "<h2 style='padding: 10px'>$title</h2>"
+    end
+    cur_table *= "<table class='table table-striped'>"
+    if !isempty(header_row)
+        cur_table *= "<thead><tr>"
+        for cur_header in header_row
+            cur_table *= "<th>$cur_header</th>"
+        end
+        cur_table *= "</tr></thead>"
+    end
+    cur_table *= "<tbody>"
+    for ii in 1:size(cur_matrix, 1)
+        cur_table *= "<tr>"
+        for jj in 1:size(cur_matrix, 2)
+            cur_table *= "<td>"
+            cur_table *= string(cur_matrix[ii, jj])
+            cur_table *= "</td>"
+        end
+        cur_table *= "</tr>"
+    end
+    cur_table *= "</tbody>"
+    cur_table *= "</table>"
+    return cur_table
+end
+function show(x::Second)::String
+    ps = canonicalize(Dates.CompoundPeriod(Second(x)))
+    a = Dict{DataType, Int}(k => 0 for k in [Hour, Minute, Second])
+    ts = [Day, Week, Month, Year]
+    for p in ps.periods
+        if typeof(p) in ts
+            a[Hour] += Hour(p).value
+        else
+            a[typeof(p)] += p.value
+        end
+    end
+    return @sprintf "%i:%02i:%02i" a[Hour] a[Minute] a[Second]
+end
+
+function show(x::Time)::String
+    i = Hour(x).value
+    i = i > 12 ? i - 12 : i
+    s = Minute(x).value >= 30 ? 0x1F550+(i-1)+12 : 0x1F550+(i-1)
+    t = uppercase(num2hex(s)[end-4:end])
+    return string("&#x$t;")
+end
+
+#=function time2radian(t::Time)
+    x = t - Time(0,0,0)
+    π*(x/convert(typeof(x), Hour(24)))
+end
+
+radian2time(α::Float64) = Time(0,0,0) + Nanosecond(round(Int, α/π*86400000000000))=#
+
+function report(folder::String)
+    a = loadAssociation(folder)
+    delete_rempty_metadata!(a)
+
+    rep = counter(Vector{String})
+    for r in a.runs
+        k = collect(values(r.run.metadata))
+        push!(rep, k)
+    end
+
+    durs = Dict(poi.name => counter(Vector{String}) for poi in a.pois)
+    coun = Dict(poi.name => counter(Vector{String}) for poi in a.pois)
+    cosa = Dict(poi.name => Accumulator(Vector{String}, Float64) for poi in a.pois)
+    sina = Dict(poi.name => Accumulator(Vector{String}, Float64) for poi in a.pois)
+    for (p, r) in a.associations
+        k = collect(values(r.run.metadata))
+        push!(durs[p.name], k, duration(p, folder))
+        push!(coun[p.name], k)
+        t = timeofday(p, folder)
+        α = convert(u"rad", t)
+        push!(cosa[p.name], k, cos(α))
+        push!(sina[p.name], k, sin(α))
+    end
+    dur = Dict(k1 => Dict(k2 => Second(round(Int, v2/coun[k1][k2])) for (k2, v2) in v1) for (k1, v1) in durs)
+    tim = Dict(k1 => Dict(k2 => convert(Time, atan2(u"rad", sina[k1][k2], v2)) for (k2, v2) in v1) for (k1, v1) in cosa)
+
+    m = Matrix{String}[]
+    for (k, v) in rep
+        run = [k; string(v)]
+        poi = [haskey(v1, k) ? show(v1[k])*" "*show(tim[k1][k]) : "" for (k1, v1) in dur]
+        push!(m, reshape([run; poi], (1,:)))
+    end
+    m = vcat(m...)
+
+    txt = table(m, header_row = [String.(collect(keys(a.runs[1].run.metadata))); "Repetition"; collect(keys(dur))], title = "Summary for $folder")
+    index = """<!DOCTYPE html> <html> <head> <style> table { font-family: arial, sans-serif; border-collapse: collapse; width: 100%; } td, th { border: 1px solid #dddddd; text-align: left; padding: 8px; } tr:nth-child(even) { background-color: #dddddd; } </style> </head> <body> $txt </body> </html>"""
+end
+
 
 end # module
