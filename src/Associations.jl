@@ -1,7 +1,7 @@
 __precompile__()
 module Associations
 
-using DataStructures, AutoHashEquals, Base.Dates, UnitfulAngles, DataStructures
+using DataStructures, AutoHashEquals, Base.Dates, Unitful, UnitfulAngles
 
 import Base: push!, empty!, delete!, isempty, ==, in, show
 
@@ -556,6 +556,7 @@ function report(folder::String)
         push!(durs[p.name], k, duration(p, folder))
         push!(coun[p.name], k)
         t = timeofday(p, folder)
+        # println(t)
         α = convert(u"rad", t)
         push!(cosa[p.name], k, cos(α))
         push!(sina[p.name], k, sin(α))

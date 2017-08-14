@@ -134,6 +134,8 @@ end
 
     @test !(k in A)
 
+    delete!(A, A.runs[1])
+    @test A.runs[2].repetition == 1
 end
 
 @testset "Load & save" begin
@@ -164,10 +166,29 @@ end
 
 end
 
+@testset "Time" begin
+
+    t1 = 2
+    Δ = 4
+    P1 = POI("name1", Point("a.mp4", Second(t1)), Point("a.mp4", Second(t1 + Δ)), "label", "comment")
+    @test Associations.duration(P1, "bogus") == Δ
+
+    t1 = 0
+    t2 = 1
+    P1 = POI("name1", Point("a.mp4", Second(t1)), Point("b.mp4", Second(t2)), "label", "comment")
+    @test Associations.duration(P1, videofolder) == 2
+
+    P1 = POI("name1", Point("a.mp4", Second(0)), Point("a.mp4", Second(0)), "label", "comment")
+    @test Associations.timeofday(P1, videofolder) == Dates.Time(16, 04, 47)
+    P2 = POI("name1", Point("b.mp4", Second(0)), Point("a.mp4", Second(0)), "label", "comment")
+    @test Associations.timeofday(P2, videofolder) == Dates.Time(15, 38, 25)
+
+end
+
 @testset "Other" begin
 
-    @test empty!(A) == Association()
-    @test isempty(A)
+    # @test empty!(A) == Association()
+    # @test isempty(A)
 
 end
 

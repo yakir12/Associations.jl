@@ -3,4 +3,5 @@
 *.jl.*.cov
 *.jl.mem
 deps/**
+test/videofolder/**
 *.todo*
