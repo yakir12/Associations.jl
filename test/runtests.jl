@@ -187,8 +187,8 @@ end
 
 @testset "Other" begin
 
-    # @test empty!(A) == Association()
-    # @test isempty(A)
+    @test empty!(A) == Association()
+    @test isempty(A)
 
 end
 
