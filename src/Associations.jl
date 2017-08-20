@@ -5,7 +5,7 @@ using DataStructures, AutoHashEquals, Base.Dates, Unitful, UnitfulAngles
 
 import Base: push!, empty!, delete!, isempty, ==, in, show
 
-export VideoFile, Point, POI, Run, Repetition, Association, loadLogVideoFiles, findVideoFiles, getVideoFiles, loadPOIs, loadRuns, loadAssociation, save, push!, empty!, delete!, isempty, replace!, in, report
+export VideoFile, Point, POI, Run, Repetition, Association, loadLogVideoFiles, findVideoFiles, getVideoFiles, loadPOIs, loadRuns, loadAssociation, save, push!, empty!, delete!, isempty, replace!, in, report, fragment
 
 exiftool_base = joinpath(Pkg.dir("Associations"), "deps", "src", "exiftool", "exiftool")
 const exiftool = exiftool_base*(is_windows() ? ".exe" : "")
@@ -574,6 +574,83 @@ function report(folder::String)
 
     txt = table(m, header_row = [String.(collect(keys(a.runs[1].run.metadata))); "Repetition"; collect(keys(dur))], title = "Summary for $folder")
     index = """<!DOCTYPE html> <html> <head> <style> table { font-family: arial, sans-serif; border-collapse: collapse; width: 100%; } td, th { border: 1px solid #dddddd; text-align: left; padding: 8px; } tr:nth-child(even) { background-color: #dddddd; } </style> </head> <body> $txt </body> </html>"""
+end
+
+function minimize_unique(x::Dict{POI, Vector{String}})
+    kill = Int[]
+    for i = 1:length(first(values(x)))
+        all(isempty(v[i]) for v in values(x)) && push!(kill, i)
+    end
+    for (k, v) in x
+        deleteat!(v, kill)
+    end
+    n = length(x)
+    M = length(first(values(x))) - 1
+    m = 1
+    for i = 1:M
+        tmp = Set(p[m+1:end] for p in values(x))
+        if length(tmp) < n
+            break
+        else
+            m += 1
+        end
+    end
+    return Dict(k => join(v[m:end], "_") for (k, v) in x)
+end
+
+function shortest_file_names(a::Association)
+    x = Dict(p => [p.stop.file, p.start.file, string(Dates.value(p.stop.time)), string(Dates.value(p.start.time)), p.label, p.name] for p in a.pois)
+    poinames = minimize_unique(x)
+    x = Dict{POI, Vector{String}}()
+    for p in a.pois
+        m = Vector{String}[]
+        for (pp,r) in a.associations
+            if pp == p
+                push!(m, [values(r.run.metadata)..., string(r.repetition)])
+            end
+        end
+        n = length(m[1])
+        y = ones(String, n)
+        for i = 1:n
+            y[i] = join(mi[i] for mi in m)
+        end
+        x[p] = y
+    end
+    runnames = minimize_unique(x)
+    return Dict(k => string(r, "_", poinames[k]) for (k, r) in runnames)
+end
+
+function fragment(folder::String)
+    a = loadAssociation(folder)
+    names = shortest_file_names(a)
+    i = 0
+    allvideofolder = joinpath(folder, "allvideofolder$i")
+    while isdir(allvideofolder)
+        i += 1
+        allvideofolder = replace(allvideofolder, r"(\d*)$", i)
+    end
+    mkdir(allvideofolder)
+    for poi in a.pois
+        name = joinpath(allvideofolder, "$(names[poi]).mp4")
+        if poi.start.file ≠ poi.stop.file
+            file = tempname()
+            open(file, "w") do o
+                for f in (poi.start.file, poi.stop.file)
+                    fullname = joinpath(folder, f)
+                    println(o, "file $fullname")
+                end
+            end
+            Δ = duration(poi, folder)
+            run(`ffmpeg -f concat -safe 0 -i $file -c copy -ss $(Dates.value(poi.start.time)) -to $Δ $name`)
+        else
+            fullname = joinpath(folder, poi.start.file)
+            if poi.start.time == poi.stop.time
+                run(`ffmpeg -i $fullname -c copy -ss $(Dates.value(poi.start.time)) -to $(Dates.value(poi.stop.time) + 1) $name`)
+            else
+                run(`ffmpeg -i $fullname -c copy -ss $(Dates.value(poi.start.time)) -to $(Dates.value(poi.stop.time)) $name`)
+            end
+        end
+    end
 end
 
 
