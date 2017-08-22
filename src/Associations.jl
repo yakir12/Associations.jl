@@ -23,9 +23,18 @@ function getDateTime(folder::String, file::String)::DateTime
     #duration_, dateTimeOriginal, createDate, modifyDate  = ("-", "-", "-", "-")
     datetime = DateTime(now())
     for i in [dateTimeOriginal, createDate, modifyDate]
-        m = matchall(r"^(\d\d\d\d:\d\d:\d\d \d\d:\d\d:\d\d)", i)
-        isempty(m) && continue
-        datetime = min(datetime, DateTime(m[1], "yyyy:mm:dd HH:MM:SS"))
+        m = match(r"^(\d\d\d\d):(\d\d):(\d\d) (\d\d):(\d\d):(\d\d).?(\d?\d?\d?)", i)
+        m == nothing && continue
+        ts = zeros(Int, 7)
+        for (j, t) in enumerate(m.captures)
+            if !isempty(t)
+                ts[j] = parse(Int, t)
+            else
+                break
+            end
+        end
+        isnull(Dates.validargs(DateTime, ts...)) || continue
+        datetime = min(datetime, DateTime(ts...))
     end
     return datetime
 end
@@ -576,7 +585,7 @@ function report(folder::String)
     index = """<!DOCTYPE html> <html> <head> <style> table { font-family: arial, sans-serif; border-collapse: collapse; width: 100%; } td, th { border: 1px solid #dddddd; text-align: left; padding: 8px; } tr:nth-child(even) { background-color: #dddddd; } </style> </head> <body> $txt </body> </html>"""
 end
 
-function minimize_unique(x::Dict{POI, Vector{String}})
+#=function minimize_unique(x::Dict{POI, Vector{String}})
     kill = Int[]
     for i = 1:length(first(values(x)))
         all(isempty(v[i]) for v in values(x)) && push!(kill, i)
@@ -596,9 +605,9 @@ function minimize_unique(x::Dict{POI, Vector{String}})
         end
     end
     return Dict(k => join(v[m:end], "_") for (k, v) in x)
-end
+end=#
 
-function shortest_file_names(a::Association)
+#=function shortest_file_names(a::Association)
     x = Dict(p => [p.stop.file, p.start.file, string(Dates.value(p.stop.time)), string(Dates.value(p.start.time)), p.label, p.name] for p in a.pois)
     poinames = minimize_unique(x)
     x = Dict{POI, Vector{String}}()
@@ -618,11 +627,11 @@ function shortest_file_names(a::Association)
     end
     runnames = minimize_unique(x)
     return Dict(k => string(r, "_", poinames[k]) for (k, r) in runnames)
-end
+end=#
 
 function fragment(folder::String)
     a = loadAssociation(folder)
-    names = shortest_file_names(a)
+    # names = shortest_file_names(a)
     i = 0
     allvideofolder = joinpath(folder, "allvideofolder$i")
     while isdir(allvideofolder)
@@ -630,8 +639,8 @@ function fragment(folder::String)
         allvideofolder = replace(allvideofolder, r"(\d*)$", i)
     end
     mkdir(allvideofolder)
-    for poi in a.pois
-        name = joinpath(allvideofolder, "$(names[poi]).mp4")
+    for (i, poi) in enumerate(a.pois)
+        name = joinpath(allvideofolder, "$i.mp4")
         if poi.start.file ≠ poi.stop.file
             file = tempname()
             open(file, "w") do o
@@ -655,3 +664,6 @@ end
 
 
 end # module
+
+
+
