@@ -59,7 +59,8 @@ end=#
 end
 
 Point(;file = "", time = Second(0)) = Point(file, time)
-Point(f::String, h::Int, m::Int, s::Int) = Point(f, sum(Second.([Hour(h), Minute(m), Second(s)])))
+Point(f::String, t::Time) = Point(f, Second(t.instant))
+Point(f::String, h::Int, m::Int, s::Int) = Point(f, Time(h, m, s))
 
 @auto_hash_equals immutable POI
     name::String
