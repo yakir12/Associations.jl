@@ -12,7 +12,7 @@ const exiftool = exiftool_base*(is_windows() ? ".exe" : "")
 
 const exts = [".webm", ".mkv", ".flv", ".flv", ".vob", ".ogv", ".ogg", ".drc", ".mng", ".avi", ".mov", ".qt", ".wmv", ".yuv", ".rm", ".rmvb", ".asf", ".amv", ".mp4", ".m4p", ".m4v", ".mpg", ".mp2", ".mpeg", ".mpe", ".mpv", ".mpg", ".mpeg", ".m2v", ".m4v", ".svi", ".3gp", ".3g2", ".mxf", ".roq", ".nsv", ".flv", ".f4v", ".f4p", ".f4a", ".f4b", ".MTS", ".DS_Store"]
 
-@auto_hash_equals immutable VideoFile
+@auto_hash_equals struct VideoFile
     file::String
     datetime::DateTime
 end
@@ -53,7 +53,7 @@ end
     return new
 end=#
 
-@auto_hash_equals immutable Point
+@auto_hash_equals struct Point
     file::String
     time::Second
 end
@@ -62,7 +62,7 @@ Point(;file = "", time = Second(0)) = Point(file, time)
 Point(f::String, t::Time) = Point(f, Second(t.instant))
 Point(f::String, h::Int, m::Int, s::Int) = Point(f, Time(h, m, s))
 
-@auto_hash_equals immutable POI
+@auto_hash_equals struct POI
     name::String
     start::Point
     stop::Point
@@ -95,19 +95,19 @@ function timeofday(poi::POI, folder::String)
     end
 end
 
-@auto_hash_equals immutable Run
+@auto_hash_equals struct Run
     metadata::Dict{Symbol, String}
     comment::String
 end
 
 Run(;metadata = Dict{Symbol, String}(), comment = "") = Run(metadata, comment)
 
-@auto_hash_equals immutable Repetition
+@auto_hash_equals struct Repetition
     run::Run
     repetition::Int
 end
 
-@auto_hash_equals immutable Association
+@auto_hash_equals struct Association
     pois::OrderedSet{POI}
     runs::OrderedSet{Repetition}
     associations::Set{Tuple{POI, Repetition}}
